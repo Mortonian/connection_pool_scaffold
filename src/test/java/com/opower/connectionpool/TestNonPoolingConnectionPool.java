@@ -41,6 +41,8 @@ public class TestNonPoolingConnectionPool {
             String count = resultSet.getString("count");
             Assert.assertTrue("Count should be greater than 0", Integer.valueOf(count) > 0);
             _log.info("Found "+count+" items");
+            pool.releaseConnection(connect);
+            EasyMock.verify(connect);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -60,6 +62,9 @@ public class TestNonPoolingConnectionPool {
             String count = resultSet.getString("count");
             Assert.assertTrue("Count should be greater than 0", Integer.valueOf(count) > 0);
             _log.info("Found "+count+" items");
+            Assert.assertFalse("Connection should NOT be closed before releasing", connect.isClosed());
+            pool.releaseConnection(connect);
+            Assert.assertTrue("Connection should be closed after realsing to a non-pooling pool", connect.isClosed());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,6 +83,10 @@ public class TestNonPoolingConnectionPool {
             
             EasyMock.expect(mockResultSet.next()).andReturn(true);
             EasyMock.expect(mockResultSet.getString("count")).andReturn("1");
+            
+            mockConnection.close();
+            
+            EasyMock.expectLastCall();
             
             EasyMock.replay(mockConnection);
             EasyMock.replay(mockStatement);
