@@ -13,6 +13,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import com.opower.connectionpool.ConnectionPool;
+import com.opower.connectionpool.descriptor.JsonFileConnectionDescriptor;
 import com.opower.connectionpool.descriptor.SimpleConnectionDescriptor;
 
 public class TestConnectionPool {
@@ -21,16 +22,35 @@ public class TestConnectionPool {
     private static final String DATABASE = "database";
     private static final String USERNAME = "username";
 
-    private static final String BASIC_COUNT_QUERY = "select count(*) from table";
+    private static final String BASIC_COUNT_QUERY = "select count(*) from item";
 
     private static Logger _log = Logger.getLogger(TestConnectionPool.class);
     
     @Test
-    public void testBasicConnection() {        
+    public void testMockedConnection() {        
         try {
             SimpleConnectionDescriptor descriptor = new SimpleConnectionDescriptor();
             descriptor.setDriverClass("org.postgresql.Driver");
             descriptor.setJdbcUrl("jdbc:postgresql://"+HOSTNAME+"/"+DATABASE+"?"+ "user="+USERNAME);
+            ConnectionCreator connectionCreator = new DumbConnectionCreator();
+            NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
+            Connection connect = pool.getConnection();
+            Statement statement = connect.createStatement();
+            ResultSet resultSet = statement.executeQuery(BASIC_COUNT_QUERY);
+            resultSet.next();
+            String count = resultSet.getString("count");
+            Assert.assertTrue("Count should be greater than 0", Integer.valueOf(count) > 0);
+            _log.info("Found "+count+" items");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testJsonFileConnection() {        
+        try {
+            JsonFileConnectionDescriptor descriptor = new JsonFileConnectionDescriptor();
+            descriptor.setFile("/tmp/dbconection.json");
             ConnectionCreator connectionCreator = new ActualConnectionCreator();
             NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
             Connection connect = pool.getConnection();
@@ -44,7 +64,6 @@ public class TestConnectionPool {
             e.printStackTrace();
         }
     }
-    
     public static class NonPoolingConnectionPool implements ConnectionPool {
         
         public ConnectionDescriptor _desciptor;
@@ -96,7 +115,11 @@ public class TestConnectionPool {
         public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
             try {
                 Class.forName(connectionDescriptor.getDriverClass());
-                return DriverManager.getConnection(connectionDescriptor.getJdbcUrl());
+                if (connectionDescriptor.getPassword() != null) {
+                    return DriverManager.getConnection(connectionDescriptor.getJdbcUrl(), connectionDescriptor.getUser(), connectionDescriptor.getPassword());
+                } else {
+                    return DriverManager.getConnection(connectionDescriptor.getJdbcUrl());
+                }
             } catch (ClassNotFoundException e) {
                 throw new SQLException(e);
             }
