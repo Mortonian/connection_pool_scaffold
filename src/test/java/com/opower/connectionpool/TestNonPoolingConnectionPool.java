@@ -32,7 +32,7 @@ public class TestNonPoolingConnectionPool {
             SimpleConnectionDescriptor descriptor = new SimpleConnectionDescriptor();
             descriptor.setDriverClass("org.postgresql.Driver");
             descriptor.setJdbcUrl("jdbc:postgresql://"+HOSTNAME+"/"+DATABASE+"?"+ "user="+USERNAME);
-            ConnectionCreator connectionCreator = new DumbConnectionCreator();
+            ConnectionCreator connectionCreator = new MockConnectionCreator();
             NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
             Connection connect = pool.getConnection();
             Statement statement = connect.createStatement();
@@ -69,7 +69,7 @@ public class TestNonPoolingConnectionPool {
             e.printStackTrace();
         }
     }
-    public static class DumbConnectionCreator implements ConnectionCreator {
+    public static class MockConnectionCreator implements ConnectionCreator {
 
         @Override
         public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
