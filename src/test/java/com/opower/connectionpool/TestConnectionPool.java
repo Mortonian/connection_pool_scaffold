@@ -28,10 +28,12 @@ public class TestConnectionPool {
         try {
             String url = "jdbc:postgresql://"+HOSTNAME+"/"+DATABASE+"?"+ "user="+USERNAME;
 
+            SimpleConnectionDescriptor descriptor = new SimpleConnectionDescriptor();
             Class.forName("org.postgresql.Driver");
-            DumbConnectionPool innerClass = new DumbConnectionPool();
-            innerClass.setUrl(url);
-            Connection connect = innerClass.getConnection();
+            descriptor.setJdbcUrl(url);
+            DumbConnectionCreator connectionCreator = new DumbConnectionCreator();
+            NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
+            Connection connect = pool.getConnection();
             Statement statement = connect.createStatement();
             ResultSet resultSet = statement.executeQuery(BASIC_COUNT_QUERY);
             resultSet.next();
@@ -43,16 +45,76 @@ public class TestConnectionPool {
         }
     }
     
-    public static class DumbConnectionPool implements ConnectionPool {
+    public static class NonPoolingConnectionPool implements ConnectionPool {
         
-        private String _url;
+        public ConnectionDescriptor _desciptor;
+        public ConnectionCreator _creator;
         
-        public void setUrl(String url) {
-            _url = url;
+        public NonPoolingConnectionPool(ConnectionDescriptor desciptor, ConnectionCreator creator) {
+            _desciptor = desciptor;
+            _creator = creator;
         }
 
         @Override
         public Connection getConnection() throws SQLException {
+            return _creator.createConnection(_desciptor);
+        }
+
+        @Override
+        public void releaseConnection(Connection connection) throws SQLException {
+            connection.close();
+        }
+        
+    }
+    
+    public static class SimpleConnectionDescriptor implements ConnectionDescriptor {
+
+        private String _driverClass;
+        private String _jdbcUrl;
+        private String _password;
+        private String _user;
+
+        @Override
+        public String getDriverClass() {
+            return _driverClass;
+        }
+
+        public void setDriverClass(String driverClass) {
+            _driverClass = driverClass;
+        }
+
+        @Override
+        public String getJdbcUrl() {
+            return _jdbcUrl;
+        }
+        
+        public void setJdbcUrl(String url) {
+            _jdbcUrl = url;
+        }
+
+        @Override
+        public String getPassword() {
+            return _password;
+        }
+        
+        public void setPassword(String password) {
+            _password = password;
+        }
+
+        @Override
+        public String getUser() {
+            return _user;
+        }
+        
+        public void getUser(String user) {
+            _user = user;
+        }
+    }
+    
+    public static class DumbConnectionCreator implements ConnectionCreator {
+
+        @Override
+        public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
             
             Connection mockConnection = EasyMock.createMock(Connection.class);
             Statement mockStatement = EasyMock.createMock(Statement.class);
@@ -69,11 +131,6 @@ public class TestConnectionPool {
             EasyMock.replay(mockResultSet);
     
             return mockConnection;
-        }
-
-        @Override
-        public void releaseConnection(Connection connection) throws SQLException {
-            //  TODO
         }
     }
 }
