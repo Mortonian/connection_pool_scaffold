@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import junit.framework.Assert;
+
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.opower.connectionpool.ConnectionPool;
@@ -16,6 +19,8 @@ public class TestConnectionPool {
     private static final String DATABASE = "database";
     private static final String USERNAME = "username";
 
+    private static Logger _log = Logger.getLogger(TestConnectionPool.class);
+    
     @Test
     public void testStuff() {        
         try {
@@ -28,6 +33,9 @@ public class TestConnectionPool {
             Statement statement = connect.createStatement();
             ResultSet resultSet = statement.executeQuery("select count(*) from table");
             resultSet.next();
+            String count = resultSet.getString("count");
+            Assert.assertTrue("Count should be greater than 0", Integer.valueOf(count) > 0);
+            _log.info("Found "+count+" items");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -42,10 +50,8 @@ public class TestConnectionPool {
         }
 
         @Override
-        public Connection getConnection() throws SQLException {
-    
-            Connection connect = DriverManager.getConnection(_url);
-            return connect;
+        public Connection getConnection() throws SQLException {    
+            return DriverManager.getConnection(_url);
         }
 
         @Override
