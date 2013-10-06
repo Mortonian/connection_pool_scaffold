@@ -1,7 +1,6 @@
 package com.opower.connectionpool;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -9,6 +8,7 @@ import java.sql.Statement;
 import junit.framework.Assert;
 
 import org.apache.log4j.Logger;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 import com.opower.connectionpool.ConnectionPool;
@@ -19,10 +19,12 @@ public class TestConnectionPool {
     private static final String DATABASE = "database";
     private static final String USERNAME = "username";
 
+    private static final String BASIC_COUNT_QUERY = "select count(*) from table";
+
     private static Logger _log = Logger.getLogger(TestConnectionPool.class);
     
     @Test
-    public void testStuff() {        
+    public void testBasicConnection() {        
         try {
             String url = "jdbc:postgresql://"+HOSTNAME+"/"+DATABASE+"?"+ "user="+USERNAME;
 
@@ -31,7 +33,7 @@ public class TestConnectionPool {
             innerClass.setUrl(url);
             Connection connect = innerClass.getConnection();
             Statement statement = connect.createStatement();
-            ResultSet resultSet = statement.executeQuery("select count(*) from table");
+            ResultSet resultSet = statement.executeQuery(BASIC_COUNT_QUERY);
             resultSet.next();
             String count = resultSet.getString("count");
             Assert.assertTrue("Count should be greater than 0", Integer.valueOf(count) > 0);
@@ -50,8 +52,23 @@ public class TestConnectionPool {
         }
 
         @Override
-        public Connection getConnection() throws SQLException {    
-            return DriverManager.getConnection(_url);
+        public Connection getConnection() throws SQLException {
+            
+            Connection mockConnection = EasyMock.createMock(Connection.class);
+            Statement mockStatement = EasyMock.createMock(Statement.class);
+            ResultSet mockResultSet = EasyMock.createMock(ResultSet.class);
+            EasyMock.expect(mockConnection.createStatement()).andReturn(mockStatement);
+            
+            EasyMock.expect(mockStatement.executeQuery(BASIC_COUNT_QUERY)).andReturn(mockResultSet);
+            
+            EasyMock.expect(mockResultSet.next()).andReturn(true);
+            EasyMock.expect(mockResultSet.getString("count")).andReturn("1");
+            
+            EasyMock.replay(mockConnection);
+            EasyMock.replay(mockStatement);
+            EasyMock.replay(mockResultSet);
+    
+            return mockConnection;
         }
 
         @Override
