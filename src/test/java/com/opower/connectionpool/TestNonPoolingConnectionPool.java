@@ -12,11 +12,11 @@ import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import com.opower.connectionpool.ConnectionPool;
 import com.opower.connectionpool.descriptor.JsonFileConnectionDescriptor;
 import com.opower.connectionpool.descriptor.SimpleConnectionDescriptor;
+import com.opower.connectionpool.pool.NonPoolingConnectionPool;
 
-public class TestConnectionPool {
+public class TestNonPoolingConnectionPool {
     
     private static final String HOSTNAME = "hostname";
     private static final String DATABASE = "database";
@@ -24,7 +24,7 @@ public class TestConnectionPool {
 
     private static final String BASIC_COUNT_QUERY = "select count(*) from item";
 
-    private static Logger _log = Logger.getLogger(TestConnectionPool.class);
+    private static Logger _log = Logger.getLogger(TestNonPoolingConnectionPool.class);
     
     @Test
     public void testMockedConnection() {        
@@ -64,28 +64,6 @@ public class TestConnectionPool {
             e.printStackTrace();
         }
     }
-    public static class NonPoolingConnectionPool implements ConnectionPool {
-        
-        public ConnectionDescriptor _desciptor;
-        public ConnectionCreator _creator;
-        
-        public NonPoolingConnectionPool(ConnectionDescriptor desciptor, ConnectionCreator creator) {
-            _desciptor = desciptor;
-            _creator = creator;
-        }
-
-        @Override
-        public Connection getConnection() throws SQLException {
-            return _creator.createConnection(_desciptor);
-        }
-
-        @Override
-        public void releaseConnection(Connection connection) throws SQLException {
-            connection.close();
-        }
-        
-    }
-    
     public static class DumbConnectionCreator implements ConnectionCreator {
 
         @Override
