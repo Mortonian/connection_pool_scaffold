@@ -76,7 +76,7 @@ These are the properties that you can specify with a [com.opower.connectionpool.
 Property| What it does
 ---|---|---
 maxPoolSize|The maximum size of connections that a pool can make.  Default value is 1.
-acquireIncrement|When the number of unleased connections reaches zero, allocate this many more before another call to ConnectionPool#getConnection() is made.  Default value is 0.  (Note: may create less than this number so as to avoid violating maxPoolSize.)
+acquireIncrement|When the number of unleased connections reaches zero, allocate this many more before another call to ConnectionPool#getConnection() is made.  Default value is 0.  (**Note:** may create less than this number so as to avoid violating maxPoolSize.)
 initialPoolSize|When the pool is initially constructed, create this many connections before users can begin to call ConnectionPool#getConnection().  Default value is 0.
 autoCommit|Should Connection.commit() be called on all leased connections before release or shutdown.  Default value is false.
 retryWaitTimeInMillis|If All connections are leased, how long to wait before trying again.  Default value is 300ms
