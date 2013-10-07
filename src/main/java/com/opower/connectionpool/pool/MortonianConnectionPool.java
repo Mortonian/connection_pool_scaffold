@@ -157,11 +157,20 @@ public class MortonianConnectionPool implements ConnectionPool {
         return shouldMoreBeProactivelyAcquired;
     }
 
+    /**
+     *  Release the passed Connection.  Throws an exception if the connection did not come from this pool     *  
+     */
     @Override
     public void releaseConnection(Connection connection) throws SQLException {
         if (connection != null) {
             synchronized (this) { 
                 PooledConnectionInfo connectionInfo = (PooledConnectionInfo) connection;
+                
+                if (!_poolGuid.equals(connectionInfo.getConnectionPoolUuid())) {
+                    _log.error("Cannot release connection from another pool.  This pools uuid is "+_poolGuid+", but the connection's was "+connectionInfo.getConnectionPoolUuid());
+                    throw new RuntimeException("Cannot release connection from another pool.  This pools uuid is "+_poolGuid+", but the connection's was "+connectionInfo.getConnectionPoolUuid());
+                }
+                
                 connectionInfo.invalidateLease();
                 
                 String connectionUuid = connectionInfo.getConnectionUuid();

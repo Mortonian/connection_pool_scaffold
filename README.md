@@ -73,8 +73,7 @@ Comming soon....
 
 ## Compiling, Testing, Oh My!
 
-You compile, package, and or testing this code using the familiar [maven][maven] commands:
-to change it as you see fit.
+You compile, package, and or testing this code using the familiar maven commands:
 
     mvn compile      # compiles your code in src/main/java
     mvn test-compile # compile test code in src/test/java

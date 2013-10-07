@@ -351,4 +351,38 @@ public class TestSimpleConnectionPool {
         }
         Assert.assertNull("11th connection should null", connection);
     }
+
+    @Test
+    public void testReleaseConnectionToWrongPool() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        MortonianConnectionPool connectionPool1 = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool2 = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection1 = connectionPool1.getConnection();
+            Connection connection2 = connectionPool2.getConnection();
+
+            Assert.assertTrue("connection1 should be valid", ((PooledConnectionInfo)connection1).isLeaseValid());
+            Assert.assertTrue("connection2 should be valid", ((PooledConnectionInfo)connection2).isLeaseValid());
+            
+            connectionPool1.releaseConnection(connection1);
+
+            Assert.assertFalse("connection1 should not be valid", ((PooledConnectionInfo)connection1).isLeaseValid());
+
+            try {
+                connectionPool1.releaseConnection(connection2);
+                Assert.fail("should not be able to release connection2 to connectionpool1");
+            } catch (Exception e) {
+                
+            }
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }        
+    }
 }
