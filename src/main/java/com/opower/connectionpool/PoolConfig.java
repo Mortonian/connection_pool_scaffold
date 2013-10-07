@@ -51,7 +51,7 @@ public interface PoolConfig {
      *         Any value less than or equal to zero will be interpretted as "infinity".  Default value is -1.  
      * 
      */
-    public int getMaxConnectionAgeInMilis();
+    public int getMaxConnectionAgeInMillis();
 
     /**
      * <B>Experimental</B>
@@ -65,5 +65,5 @@ public interface PoolConfig {
      *         Any value less than or equal to zero will be interpretted as "infinity".  Default value is -1.  
      * 
      */
-    public int getMaxIdleTimeInMilis();
+    public int getMaxIdleTimeInMillis();
 }

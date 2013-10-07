@@ -193,8 +193,8 @@ public class MortonianConnectionPool implements ConnectionPool {
         long connectionAge = currentTimeMillis - timeStampCreated;
         long connectionIdleTime = null != timeStampLeased ? currentTimeMillis - timeStampLeased : connectionAge;
         
-        int maxConnectionAge = _poolConfig.getMaxConnectionAgeInMilis();
-        int maxIdleTime = _poolConfig.getMaxIdleTimeInMilis();
+        int maxConnectionAge = _poolConfig.getMaxConnectionAgeInMillis();
+        int maxIdleTime = _poolConfig.getMaxIdleTimeInMillis();
         
         if ((maxConnectionAge > 0 && connectionAge >= maxConnectionAge) || (maxIdleTime > 0 && connectionIdleTime >= maxIdleTime)) {
             if (connectionEntry.isLeased()) {

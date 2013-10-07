@@ -678,8 +678,8 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(2);
-        int maxConnectionAgeInMilis = 1000;
-        poolConfig.setMaxConnectionAgeInMilis(maxConnectionAgeInMilis);
+        int maxConnectionAgeInMillis = 1000;
+        poolConfig.setMaxConnectionAgeInMillis(maxConnectionAgeInMillis);
         poolConfig.setAutoCommit(true);
         MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
@@ -697,7 +697,7 @@ public class TestSimpleConnectionPool {
             connectionPool.releaseConnection(connection);
 
             try {
-                Thread.sleep(maxConnectionAgeInMilis / 2);
+                Thread.sleep(maxConnectionAgeInMillis / 2);
             } catch (InterruptedException e1) {
                 _log.error("Woke up from nap");
             }
@@ -715,7 +715,7 @@ public class TestSimpleConnectionPool {
             connectionPool.releaseConnection(connection2);
             
             try {
-                Thread.sleep(10 + (maxConnectionAgeInMilis / 2));
+                Thread.sleep(10 + (maxConnectionAgeInMillis / 2));
             } catch (InterruptedException e1) {
                 _log.error("Woke up from nap");
             }
@@ -747,9 +747,9 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(2);
-        int maxIdleTimeInMilis = 1000;
-        poolConfig.setMaxIdleTimeInMilis(maxIdleTimeInMilis);
-        poolConfig.setMaxConnectionAgeInMilis(maxIdleTimeInMilis * 10);
+        int maxIdleTimeInMillis = 1000;
+        poolConfig.setMaxIdleTimeInMillis(maxIdleTimeInMillis);
+        poolConfig.setMaxConnectionAgeInMillis(maxIdleTimeInMillis * 10);
         poolConfig.setAutoCommit(true);
         MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
@@ -767,7 +767,7 @@ public class TestSimpleConnectionPool {
             connectionPool.releaseConnection(connection);
 
             try {
-                Thread.sleep(maxIdleTimeInMilis / 2);
+                Thread.sleep(maxIdleTimeInMillis / 2);
             } catch (InterruptedException e1) {
                 _log.error("Woke up from nap");
             }
@@ -785,7 +785,7 @@ public class TestSimpleConnectionPool {
             connectionPool.releaseConnection(connection2);
             
             try {
-                Thread.sleep(10 + (maxIdleTimeInMilis / 2));
+                Thread.sleep(10 + (maxIdleTimeInMillis / 2));
             } catch (InterruptedException e1) {
                 _log.error("Woke up from nap");
             }
@@ -804,7 +804,7 @@ public class TestSimpleConnectionPool {
             connectionPool.releaseConnection(connection3);
             
             try {
-                Thread.sleep(10 + (maxIdleTimeInMilis / 2));
+                Thread.sleep(10 + (maxIdleTimeInMillis / 2));
             } catch (InterruptedException e1) {
                 _log.error("Woke up from nap");
             }
@@ -822,7 +822,7 @@ public class TestSimpleConnectionPool {
             connectionPool.releaseConnection(connection4);
             
             try {
-                Thread.sleep(10 + maxIdleTimeInMilis);
+                Thread.sleep(10 + maxIdleTimeInMillis);
             } catch (InterruptedException e1) {
                 _log.error("Woke up from nap");
             }

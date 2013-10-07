@@ -45,12 +45,12 @@ public class JsonFilePoolConfig extends AbstractJsonFileConfigReader implements 
     }
 
     @Override
-    public int getMaxConnectionAgeInMilis() {
-        return getIntWithDefault("maxConnectionAgeInMilis", -1);
+    public int getMaxConnectionAgeInMillis() {
+        return getIntWithDefault("maxConnectionAgeInMillis", -1);
     }
 
     @Override
-    public int getMaxIdleTimeInMilis() {
-        return getIntWithDefault("maxIdleTimeInMilis", -1);
+    public int getMaxIdleTimeInMillis() {
+        return getIntWithDefault("maxIdleTimeInMillis", -1);
     }
 }
