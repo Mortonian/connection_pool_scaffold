@@ -5,11 +5,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.log4j.Logger;
 
@@ -24,8 +24,8 @@ public class SimpleConnectionPool implements ConnectionPool {
     private ConnectionDescriptor _desciptor;
     private ConnectionCreator _creator;
     private int _poolSize = 1;
-    private Set<ConnectionPoolEntry> _connectionsHandedOut = new HashSet<ConnectionPoolEntry>();
-    private Queue<ConnectionPoolEntry> _connectionsAvailable  = new LinkedList<ConnectionPoolEntry>();
+    private Map<String, ConnectionPoolEntry> _createdConnections = new ConcurrentHashMap<String, ConnectionPoolEntry>();
+    private Queue<String> _connectionsAvailable  = new ConcurrentLinkedQueue<String>();
     private String _poolGuid = UUID.randomUUID().toString();
     
     public SimpleConnectionPool(ConnectionDescriptor desciptor, ConnectionCreator creator, int poolSize) {
@@ -36,21 +36,38 @@ public class SimpleConnectionPool implements ConnectionPool {
     
     @Override
     public Connection getConnection() throws SQLException {
-        if (!_connectionsAvailable.isEmpty()) {
-            _log.debug("providing pre-created connection from pool");
-            ConnectionPoolEntry poolEntry = _connectionsAvailable.remove();
-            _connectionsHandedOut.add(poolEntry);
-            return buildProxiedConnection(poolEntry);
-        } else {
-            if (_connectionsHandedOut.size() < _poolSize) {
-                _log.debug("pool too small.  providing newly created connection from pool");
-                ConnectionPoolEntry poolEntry = createConnectionPoolEntry();
-                _connectionsHandedOut.add(poolEntry);
-                return buildProxiedConnection(poolEntry);
+        
+        ConnectionPoolEntry connectionEntry = null;
+        boolean needsNewConnection = false;
+        
+        synchronized (this) {
+            if (!_connectionsAvailable.isEmpty()) {
+                _log.debug("providing pre-created connection from pool");
+                String availableConnectionUuid = _connectionsAvailable.remove();
+                connectionEntry = _createdConnections.get(availableConnectionUuid);
+                connectionEntry.setLeased(true);
             } else {
-                _log.debug("All connections handed out.  Returning null, rather than providing connection.");
-                return null; // Or block, or throw exception, or ....
+                if (_createdConnections.size() < _poolSize) {
+                    _log.debug("pool too small.  providing newly created connection from pool");
+                    connectionEntry = new ConnectionPoolEntry();
+                    _createdConnections.put(connectionEntry.getConnectionUuid(), connectionEntry);
+                    needsNewConnection = true;
+                    connectionEntry.setLeased(true);
+                } else {
+                    // Or block, or throw exception, or ....
+                    _log.debug("All connections handed out.  Returning null, rather than providing connection.");
+                }
             }
+        }
+        
+        if (null == connectionEntry) {
+            return null;
+        } else {
+            if (needsNewConnection) {
+                Connection rawConnection = _creator.createConnection(_desciptor);
+                connectionEntry.setRawConnection(rawConnection);
+            }
+            return buildProxiedConnection(connectionEntry);
         }
     }
 
@@ -112,10 +129,6 @@ public class SimpleConnectionPool implements ConnectionPool {
         private String _connectionUuid = UUID.randomUUID().toString(); 
         private Connection _rawConnection;
         
-        public ConnectionPoolEntry(Connection rawConnection) {
-            _rawConnection = rawConnection;
-        }
-
         public String getConnectionUuid() {
             return _connectionUuid;
         }
@@ -132,13 +145,9 @@ public class SimpleConnectionPool implements ConnectionPool {
             return _rawConnection;
         }
         
-    }
-
-    private ConnectionPoolEntry createConnectionPoolEntry() throws SQLException {
-        Connection rawConnection = _creator.createConnection(_desciptor);
-        ConnectionPoolEntry enrty = new ConnectionPoolEntry(rawConnection);
-        enrty.setLeased(true);
-        return enrty;
+        public void setRawConnection(Connection rawConnection) {
+            _rawConnection = rawConnection;
+        }
     }
 
     private Connection buildProxiedConnection(ConnectionPoolEntry poolEntry) {
@@ -148,23 +157,39 @@ public class SimpleConnectionPool implements ConnectionPool {
     @Override
     public void releaseConnection(Connection connection) throws SQLException {
         if (connection != null) {
-            PooledConnectionInfo connectionInfo = (PooledConnectionInfo) connection;
-            connectionInfo.invalidateLease();
-            for (ConnectionPoolEntry connectionHandedOut : _connectionsHandedOut) {
-                if (connectionHandedOut.getConnectionUuid().equals(connectionInfo.getConnectionUuid())) {
-                    _connectionsHandedOut.remove(connectionHandedOut);
-                    _connectionsAvailable.add(connectionHandedOut);
+            synchronized (this) { 
+                PooledConnectionInfo connectionInfo = (PooledConnectionInfo) connection;
+                connectionInfo.invalidateLease();
+                
+                String connectionUuid = connectionInfo.getConnectionUuid();
+                ConnectionPoolEntry connectionPoolEntry = _createdConnections.get(connectionUuid);
+                connectionPoolEntry.setLeased(false);
+                if (!_connectionsAvailable.contains(connectionUuid)) {
+                    _connectionsAvailable.add(connectionUuid);
                 }
             }
         }
     }
     
     public int getNumberOfConnectionsAvailable() {
-        return _connectionsAvailable.size();
+        synchronized (this) { 
+            // probably doesn't need to be in a synchronized block, 
+            // since every method on ConcurrentLinkedQueue should be atomic
+            // but, better safe than sorry
+            return _connectionsAvailable.size();
+        }
     }
     
-    public int getNumberOfConnectionsHandedOut() {
-        return _connectionsHandedOut.size();
+    public int getNumberOfConnectionsLeased() {
+        synchronized (this) { 
+            int count = 0;
+            for (ConnectionPoolEntry entry : _createdConnections.values()) {
+                if (entry.isLeased()) {
+                    count++;
+                }   
+            }
+            return count;
+        }
     }
 
 }

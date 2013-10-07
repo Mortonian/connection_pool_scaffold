@@ -24,14 +24,14 @@ public class TestSimpleConnectionPool {
         
         Connection connection;
         try {
-            Assert.assertEquals("Number of connections handed out should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out should be 0", 0, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available should be 0", 0, connecionPool.getNumberOfConnectionsAvailable());
             connection = connecionPool.getConnection();
             Assert.assertNull("Connection returned from a zero-sized pool should be null", connection);
-            Assert.assertEquals("Number of connections handed out after get connection should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out after get connection should be 0", 0, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available after get connection should be 0", 0, connecionPool.getNumberOfConnectionsAvailable());
             connecionPool.releaseConnection(connection);
-            Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available after release connection should be 0", 0, connecionPool.getNumberOfConnectionsAvailable());
         } catch (SQLException e) {
             _log.error("Error testing zero-sized connection pool", e);
@@ -46,17 +46,17 @@ public class TestSimpleConnectionPool {
         
         Connection connection;
         try {
-            Assert.assertEquals("Number of connections handed out should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out should be 0", 0, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available should be 0", 0, connecionPool.getNumberOfConnectionsAvailable());
             connection = connecionPool.getConnection();
             Assert.assertNotNull("Connection returned from a zero-sized pool should not be null", connection);
-            Assert.assertEquals("Number of connections handed out after get connection should be 1", 1, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out after get connection should be 1", 1, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available after get connection should be 0", 0, connecionPool.getNumberOfConnectionsAvailable());
             connecionPool.releaseConnection(connection);
-            Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available after release connection should be 1", 1, connecionPool.getNumberOfConnectionsAvailable());
             connecionPool.releaseConnection(connection);
-            Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
+            Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsLeased());
             Assert.assertEquals("Number of connections available after release connection should be 1", 1, connecionPool.getNumberOfConnectionsAvailable());
             Connection connection2 = connecionPool.getConnection();
             String uuid1 = ((PooledConnectionInfo)connection).getConnectionUuid();
