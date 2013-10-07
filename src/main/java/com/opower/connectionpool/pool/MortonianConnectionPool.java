@@ -106,28 +106,35 @@ public class MortonianConnectionPool implements ConnectionPool {
     }
 
     private ConnectionPoolEntry getOrCreateInitializedConnectionEntry() throws SQLException {
-        ConnectionPoolEntry connectionEntry = null;
-        
-        synchronized (this) {
-            if (!_unleasedConnections.isEmpty()) {
-                _log.debug("providing pre-created connection from pool");
-                String unleasedConnectionUuid = _unleasedConnections.remove();
-                connectionEntry = _connectionEntries.get(unleasedConnectionUuid);
-                connectionEntry.setLeased(true);
-                connectionEntry.setTimeStampLeased(System.currentTimeMillis());
-            } else if (_connectionEntries.size() < _poolConfig.getMaxPoolSize()) {
-                _log.debug("pool too small.  providing newly created connection from pool");
-                // DO NOT initialize the connection here, because it's slow and we're in a synchronized block.
-                // initialize outside of the block
-                connectionEntry = createNewConnectionEntry(true);
-            } else {
-                // Or block, or throw exception, or ....
-                _log.debug("All connections handed out.  Returning null, rather than providing connection.");
-            }
-        }
+        ConnectionPoolEntry connectionEntry = getOrCreateConnectionEntry();
         
         if (null != connectionEntry && null == connectionEntry.getRawConnection()) {
             initializeConnection(connectionEntry);
+        }
+        return connectionEntry;
+    }
+
+    private synchronized ConnectionPoolEntry getOrCreateConnectionEntry() {
+        ConnectionPoolEntry connectionEntry = null;
+        if (!_unleasedConnections.isEmpty()) {
+            _log.debug("providing pre-created connection from pool");
+            String unleasedConnectionUuid = _unleasedConnections.remove();
+            connectionEntry = _connectionEntries.get(unleasedConnectionUuid);
+            boolean wasRetired = retireIfTooOld(connectionEntry);
+            if (wasRetired) {
+                return getOrCreateConnectionEntry();
+            } else {
+                connectionEntry.setLeased(true);
+                connectionEntry.setTimeStampLeased(System.currentTimeMillis());
+            }
+        } else if (_connectionEntries.size() < _poolConfig.getMaxPoolSize()) {
+            _log.debug("pool too small.  providing newly created connection from pool");
+            // DO NOT initialize the connection here, because it's slow and we're in a synchronized block.
+            // initialize outside of the block
+            connectionEntry = createNewConnectionEntry(true);
+        } else {
+            // Or block, or throw exception, or ....
+            _log.debug("All connections handed out.  Returning null, rather than providing connection.");
         }
         return connectionEntry;
     }
@@ -176,6 +183,38 @@ public class MortonianConnectionPool implements ConnectionPool {
         return shouldMoreBeProactivelyAcquired;
     }
 
+    private boolean retireIfTooOld(ConnectionPoolEntry connectionEntry) {
+        boolean wasRetired = false;
+        long currentTimeMillis = System.currentTimeMillis();
+        
+        Long timeStampCreated = connectionEntry.getTimeStampCreated();
+        Long timeStampLeased = connectionEntry.getTimeStampLeased();
+        
+        long connectionAge = currentTimeMillis - timeStampCreated;
+        long connectionIdleTime = null != timeStampLeased ? currentTimeMillis - timeStampLeased : connectionAge;
+        
+        int maxConnectionAge = _poolConfig.getMaxConnectionAgeInMilis();
+        int maxIdleTime = _poolConfig.getMaxIdleTimeInMilis();
+        
+        if ((maxConnectionAge > 0 && connectionAge >= maxConnectionAge) || (maxIdleTime > 0 && connectionIdleTime >= maxIdleTime)) {
+            if (connectionEntry.isLeased()) {
+                try {
+                    releaseConnection(buildConnectionProxy(connectionEntry));
+                } catch (SQLException e) {
+                    _log.error("Trouble releasing connection: "+e,e);
+                }
+            }
+            try {
+                connectionEntry.getRawConnection().close();
+            } catch (SQLException e) {
+                _log.error("Trouble closing connection: "+e,e);
+            }
+            _connectionEntries.remove(connectionEntry.getConnectionUuid());
+            wasRetired = true;
+        }
+        return wasRetired;
+    }
+
     /**
      *  Release the passed Connection.  Throws an exception if the connection did not come from this pool     *  
      */
@@ -199,7 +238,6 @@ public class MortonianConnectionPool implements ConnectionPool {
                 String connectionUuid = connectionInfo.getConnectionUuid();
                 ConnectionPoolEntry connectionPoolEntry = _connectionEntries.get(connectionUuid);
                 connectionPoolEntry.setLeased(false);
-                connectionPoolEntry.setTimeStampLeased(null);
                 if (!_unleasedConnections.contains(connectionUuid)) {
                     _unleasedConnections.add(connectionUuid);
                 }
@@ -222,8 +260,16 @@ public class MortonianConnectionPool implements ConnectionPool {
     public synchronized void shutdown() throws SQLException {
         if (!isShutdown()) {
             for (ConnectionPoolEntry entry : _connectionEntries.values()) {
-                if (entry.isLeased()) {
-                    releaseConnection(buildConnectionProxy(entry));
+                try {
+                    if (entry.isLeased()) {
+                        releaseConnection(buildConnectionProxy(entry));
+                    }
+                } catch (SQLException e) {
+                    throw e;
+                } finally {
+                    if (!entry.getRawConnection().isClosed()) {
+                        entry.getRawConnection().close();
+                    }
                 }
             }
             _shutdown = true;

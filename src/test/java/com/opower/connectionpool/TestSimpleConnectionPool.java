@@ -594,11 +594,14 @@ public class TestSimpleConnectionPool {
 
             EasyMock.verify(mockConnection);
             EasyMock.reset(mockConnection);
+            EasyMock.expect(mockConnection.isClosed()).andReturn(false);
+            mockConnection.close();
+            EasyMock.expectLastCall();
             EasyMock.replay(mockConnection);
             
             connectionPool.shutdown();
 
-            Assert.assertTrue("Connection Pools should not be shutdown", connectionPool.isShutdown());
+            Assert.assertTrue("Connection Pools should be shutdown", connectionPool.isShutdown());
             Assert.assertFalse("Connection should no longer be valid", ((PooledConnectionInfo)connection).isLeaseValid());
 
             EasyMock.verify(mockConnection);
@@ -640,12 +643,16 @@ public class TestSimpleConnectionPool {
 
             mockConnection.commit();
             EasyMock.expectLastCall();
+
+            EasyMock.expect(mockConnection.isClosed()).andReturn(false);
+            mockConnection.close();
+            EasyMock.expectLastCall();
             
             EasyMock.replay(mockConnection);
             
             connectionPool.shutdown();
 
-            Assert.assertTrue("Connection Pools should not be shutdown", connectionPool.isShutdown());
+            Assert.assertTrue("Connection Pools should be shutdown", connectionPool.isShutdown());
 
             EasyMock.verify(mockConnection);
             
@@ -655,6 +662,250 @@ public class TestSimpleConnectionPool {
             } catch (Exception e) {
                 _log.debug("Correctly got error working with connection post shutdown:"+e);
             }
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }   
+    }
+
+    @Test
+    public void testMaxConnectionAge() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        Connection mockConnection2 = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(2);
+        int maxConnectionAgeInMilis = 1000;
+        poolConfig.setMaxConnectionAgeInMilis(maxConnectionAgeInMilis);
+        poolConfig.setAutoCommit(true);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertTrue("First connection should still be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            
+            connectionPool.releaseConnection(connection);
+
+            try {
+                Thread.sleep(maxConnectionAgeInMilis / 2);
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection2 = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertTrue("Second connection should still be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+
+            connectionPool.releaseConnection(connection2);
+            
+            try {
+                Thread.sleep(10 + (maxConnectionAgeInMilis / 2));
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection2);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection3 = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertFalse("Second connection should no longer be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+            Assert.assertTrue("Third connection should still be valid ", ((PooledConnectionInfo)connection3).isLeaseValid());
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }   
+    }
+
+    @Test
+    public void testMaxIdleTime() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        Connection mockConnection2 = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(2);
+        int maxIdleTimeInMilis = 1000;
+        poolConfig.setMaxIdleTimeInMilis(maxIdleTimeInMilis);
+        poolConfig.setMaxConnectionAgeInMilis(maxIdleTimeInMilis * 10);
+        poolConfig.setAutoCommit(true);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertTrue("First connection should still be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            
+            connectionPool.releaseConnection(connection);
+
+            try {
+                Thread.sleep(maxIdleTimeInMilis / 2);
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection2 = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertTrue("Second connection should still be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+
+            connectionPool.releaseConnection(connection2);
+            
+            try {
+                Thread.sleep(10 + (maxIdleTimeInMilis / 2));
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection3 = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertFalse("Second connection should no longer be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+            Assert.assertTrue("Third connection should still be valid ", ((PooledConnectionInfo)connection3).isLeaseValid());
+
+            connectionPool.releaseConnection(connection3);
+            
+            try {
+                Thread.sleep(10 + (maxIdleTimeInMilis / 2));
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection4 = connectionPool.getConnection();
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertFalse("Second connection should no longer be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+            Assert.assertFalse("Third connection should no longer be valid ", ((PooledConnectionInfo)connection3).isLeaseValid());
+            Assert.assertTrue("Fourth connection should still be valid ", ((PooledConnectionInfo)connection4).isLeaseValid());
+
+            connectionPool.releaseConnection(connection4);
+            
+            try {
+                Thread.sleep(10 + maxIdleTimeInMilis);
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection2);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection5 = connectionPool.getConnection();
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertFalse("Second connection should no longer be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+            Assert.assertFalse("Third connection should no longer be valid ", ((PooledConnectionInfo)connection3).isLeaseValid());
+            Assert.assertFalse("Fourth connection should no longer be valid ", ((PooledConnectionInfo)connection4).isLeaseValid());
+            Assert.assertTrue("Fifth connection should still be valid ", ((PooledConnectionInfo)connection5).isLeaseValid());
+            
+            
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }   
+    }
+
+    @Test
+    public void testDefaultMaxConnectionAgeAndMaxIdleTime() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(1);
+        int randomWaitTime = 1000;
+        poolConfig.setAutoCommit(true);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertTrue("First connection should still be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            
+            connectionPool.releaseConnection(connection);
+
+            try {
+                Thread.sleep(randomWaitTime);
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection2 = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertTrue("Second connection should still be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+
+            connectionPool.releaseConnection(connection2);
+            
+            try {
+                Thread.sleep(10 + (randomWaitTime));
+            } catch (InterruptedException e1) {
+                _log.error("Woke up from nap");
+            }
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            Connection connection3 = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+
+            Assert.assertFalse("First connection should no longer be valid ", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertFalse("Second connection should no longer be valid ", ((PooledConnectionInfo)connection2).isLeaseValid());
+            Assert.assertTrue("Third connection should still be valid ", ((PooledConnectionInfo)connection3).isLeaseValid());
             
         } catch (SQLException e) {
             _log.error("Error getting connection", e);

@@ -43,4 +43,14 @@ public class JsonFilePoolConfig extends AbstractJsonFileConfigReader implements 
     public int getRetryWaitTimeInMillis() {
         return getIntWithDefault("retryWaitTimeInMillis", 300);
     }
+
+    @Override
+    public int getMaxConnectionAgeInMilis() {
+        return getIntWithDefault("maxConnectionAgeInMilis", -1);
+    }
+
+    @Override
+    public int getMaxIdleTimeInMilis() {
+        return getIntWithDefault("maxIdleTimeInMilis", -1);
+    }
 }

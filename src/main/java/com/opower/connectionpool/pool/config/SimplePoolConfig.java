@@ -10,6 +10,8 @@ public class SimplePoolConfig implements PoolConfig {
     private boolean _autoCommit = false;
     private int _retryAttempts = 0;
     private int _retryWaitTimeMillis = 300;
+    private int _maxConnectionAgeInMilis = -1;
+    private int _maxIdleTimeInMilis = -1;
     
     @Override
     public int getMaxPoolSize() {
@@ -65,4 +67,21 @@ public class SimplePoolConfig implements PoolConfig {
         _retryWaitTimeMillis = retryWaitTimeMillis;
     }
 
+    @Override
+    public int getMaxConnectionAgeInMilis() {
+        return _maxConnectionAgeInMilis;
+    }
+
+    public void setMaxConnectionAgeInMilis(int maxConnectionAgeInMilis) {
+        _maxConnectionAgeInMilis = maxConnectionAgeInMilis;
+    }
+
+    @Override
+    public int getMaxIdleTimeInMilis() {
+        return _maxIdleTimeInMilis;
+    }
+    
+    public void setMaxIdleTimeInMilis(int maxIdleTimeInMilis) {
+        _maxIdleTimeInMilis = maxIdleTimeInMilis;
+    }
 }
