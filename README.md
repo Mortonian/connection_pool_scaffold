@@ -10,7 +10,7 @@ As of now, only one implementation of `src/main/java/com/opower/connectionpool/C
 
 However, this separation is heavily used by the unit testing code included in this solution, with a [NonPoolingConnectionPool](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/test/java/com/opower/connectionpool/NonPoolingConnectionPool.java) being used to test individual database connections without proper pooling, and a [MockConnectionCreator](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/test/java/com/opower/connectionpool/MockConnectionCreator.java) being used to test pooling behaviour with mock connections.
 
-The MortonianConnectionPool supports configurable pool sizes (initial, max, and acquire increment), configurable retry behavior (may retries and wait time in millisecons), auto-commit on release, and other, "experiemental" features.  And all of these features are are verified with unit tests that you can find in [the test package](https://github.com/Mortonian/connection_pool_scaffold/tree/master/src/test/java/com/opower/connectionpool).   
+The MortonianConnectionPool supports configurable pool sizes (initial, max, and acquire increment), configurable retry behavior (may retries and wait time in millisecons), auto-commit on release, and other, "experiemental", features.  And all of these features are are verified with unit tests that you can find in [the test package](https://github.com/Mortonian/connection_pool_scaffold/tree/master/src/test/java/com/opower/connectionpool).   
 
 ## Basic Usage
 
