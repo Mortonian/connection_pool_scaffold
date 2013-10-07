@@ -1,38 +1,16 @@
 package com.opower.connectionpool.connectionconfig;
 
-import java.io.FileReader;
-
 import org.apache.log4j.Logger;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import com.opower.connectionpool.ConnectionConfig;
+import com.opower.connectionpool.json.AbstractJsonFileConfigReader;
 
-public class JsonFileConnectionConfig implements ConnectionConfig {
+public class JsonFileConnectionConfig extends AbstractJsonFileConfigReader implements ConnectionConfig {
 
     private static Logger _log = Logger.getLogger(JsonFileConnectionConfig.class);
     
-    private String _fileName;
-    private JSONObject _parsedFile;
-    
-    public void setFile(String fileName) {
-        _fileName = fileName;
-    }
-
-    public String getFile() {
-        return _fileName;
-    }
-
-    public JSONObject getOrReadJson() {
-        if (_parsedFile == null) {
-            try {
-                _parsedFile = (JSONObject) (new JSONParser()).parse(new FileReader(_fileName));
-            } catch (Exception e) {
-                _log.error("Could not read from file "+_fileName, e);
-                throw new RuntimeException(e);
-            }
-        }
-        return _parsedFile;
+    protected Logger getLogger() {
+        return _log;
     }
     
     @Override

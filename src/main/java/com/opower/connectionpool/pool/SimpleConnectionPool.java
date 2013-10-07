@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import com.opower.connectionpool.ConnectionCreator;
 import com.opower.connectionpool.ConnectionConfig;
 import com.opower.connectionpool.ConnectionPool;
+import com.opower.connectionpool.PoolConfig;
 
 public class SimpleConnectionPool implements ConnectionPool {
 
@@ -23,15 +24,15 @@ public class SimpleConnectionPool implements ConnectionPool {
 
     private ConnectionConfig _connectionConfig;
     private ConnectionCreator _connectionCreator;
-    private int _poolSize = 1;
+    private PoolConfig _poolConfig;
     private Map<String, ConnectionPoolEntry> _createdConnections = new ConcurrentHashMap<String, ConnectionPoolEntry>();
     private Queue<String> _connectionsAvailable  = new ConcurrentLinkedQueue<String>();
     private String _poolGuid = UUID.randomUUID().toString();
     
-    public SimpleConnectionPool(ConnectionConfig connectionConfig, ConnectionCreator creator, int poolSize) {
+    public SimpleConnectionPool(ConnectionConfig connectionConfig, ConnectionCreator creator, PoolConfig poolConfig) {
         _connectionConfig = connectionConfig;
         _connectionCreator = creator;
-        _poolSize = poolSize;
+        _poolConfig = poolConfig;
     }
     
     @Override
@@ -47,7 +48,7 @@ public class SimpleConnectionPool implements ConnectionPool {
                 connectionEntry = _createdConnections.get(availableConnectionUuid);
                 connectionEntry.setLeased(true);
             } else {
-                if (_createdConnections.size() < _poolSize) {
+                if (_createdConnections.size() < _poolConfig.getMaxPoolSize()) {
                     _log.debug("pool too small.  providing newly created connection from pool");
                     connectionEntry = new ConnectionPoolEntry();
                     _createdConnections.put(connectionEntry.getConnectionUuid(), connectionEntry);

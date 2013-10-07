@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import com.opower.connectionpool.pool.PooledConnectionInfo;
 import com.opower.connectionpool.pool.SimpleConnectionPool;
+import com.opower.connectionpool.poolconfig.SimplePoolConfig;
 
 public class TestSimpleConnectionPool {
 
@@ -22,7 +23,9 @@ public class TestSimpleConnectionPool {
         ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 0);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(0);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -46,7 +49,9 @@ public class TestSimpleConnectionPool {
         ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 1);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(1);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -79,7 +84,9 @@ public class TestSimpleConnectionPool {
         Connection mockConnection = EasyMock.createMock(Connection.class);
         Statement mockStatement = EasyMock.createMock(Statement.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 1);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(1);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
 
         Connection connection;
         try {
@@ -111,7 +118,9 @@ public class TestSimpleConnectionPool {
         ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 2);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(2);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -161,7 +170,9 @@ public class TestSimpleConnectionPool {
         ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 10);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(10);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         for (int i = 0; i < 10; i++) {
             Connection connection = null;
