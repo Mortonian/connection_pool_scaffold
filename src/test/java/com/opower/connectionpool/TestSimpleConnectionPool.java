@@ -2,6 +2,7 @@ package com.opower.connectionpool;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import junit.framework.Assert;
 
@@ -19,7 +20,8 @@ public class TestSimpleConnectionPool {
     @Test
     public void testZeroSizedConnectionPool() {
         ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
-        ConnectionCreator mockConnectionCreator = new MockConnectionCreator();
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimpleConnectionPool connecionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 0);
         
         Connection connection;
@@ -41,7 +43,8 @@ public class TestSimpleConnectionPool {
     @Test
     public void testOneSizedConnectionPool() {
         ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
-        ConnectionCreator mockConnectionCreator = new MockConnectionCreator();
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimpleConnectionPool connecionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 1);
         
         Connection connection;
@@ -66,13 +69,51 @@ public class TestSimpleConnectionPool {
             _log.error("Error testing zero-sized connection pool", e);
         }  
     }
+
+    @Test
+    public void testConnectionReleasing() {
+        
+        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        Statement mockStatement = EasyMock.createMock(Statement.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimpleConnectionPool connecionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 1);
+
+        Connection connection;
+        try {
+
+            EasyMock.expect(mockConnection.createStatement()).andReturn(mockStatement);
+            EasyMock.replay(mockConnection);
+            
+            connection = connecionPool.getConnection();
+            Statement statement = connection.createStatement();
+            Assert.assertTrue("Connection should still be valid", ((PooledConnectionInfo)connection).isLeaseValid());
+            Assert.assertNotNull("Valid connections should return non-null statements", statement);
+            
+            connecionPool.releaseConnection(connection);
+            Assert.assertFalse("Connection should no longer be valid", ((PooledConnectionInfo)connection).isLeaseValid());
+            try {
+                connection.createStatement();
+                Assert.fail("Released connections should not allow you to call methods");
+            } catch (Exception e) { }
+            
+            EasyMock.verify(mockConnection);
+        } catch (SQLException e) {
+            _log.error("Error testing zero-sized connection pool", e);
+        } 
+    }
     
     public static class MockConnectionCreator implements ConnectionCreator {
+        
+        private Connection _mockConnection;
+        
+        public MockConnectionCreator(Connection mockConnection) {
+            _mockConnection = mockConnection;
+        }
 
         @Override
         public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
-            Connection mockConnection = EasyMock.createMock(Connection.class);
-            return mockConnection;
+            return _mockConnection;
         }
     }
 }
