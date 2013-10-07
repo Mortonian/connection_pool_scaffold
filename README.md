@@ -71,6 +71,8 @@ The Json file format looks like you would expect.  Here is an example:
 
 ## Connection Configurations
 
+These are the properties that you can specify with a [com.opower.connectionpool.PoolConfig](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/main/java/com/opower/connectionpool/PoolConfig.java).
+
 Property| What it does
 ---|---|---
 maxPoolSize|The maximum size of connections that a pool can make.  Default value is 1.
