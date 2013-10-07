@@ -3,7 +3,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * TODO: Put instructions here (if any)
+ * TODO: This class has one implementation, the {@link com.opower.connectionpool.pool.MortonianConnectionPool}.
+ * 
+ * That implementation uses a {@link ConnectionConfig}, {@link ConnectionCreator}, and a {@link PoolConfig} 
+ * together to defined the expected connection pooling behavior. 
  */
 public interface ConnectionPool {
 

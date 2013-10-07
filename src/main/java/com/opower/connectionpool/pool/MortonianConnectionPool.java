@@ -20,6 +20,12 @@ import com.opower.connectionpool.ConnectionConfig;
 import com.opower.connectionpool.ConnectionPool;
 import com.opower.connectionpool.PoolConfig;
 
+/**
+ * An implementation of com.opower.connectionpool.ConnectionPool.
+ * This class uses a {@link ConnectionConfig}, {@link  ConnectionCreator}, and a {@link PoolConfig} 
+ * together to achieve the defined connection pooling behavior. 
+ *
+ */
 public class MortonianConnectionPool implements ConnectionPool {
 
     private static Logger _log = Logger.getLogger(MortonianConnectionPool.class);
@@ -31,6 +37,12 @@ public class MortonianConnectionPool implements ConnectionPool {
     private Queue<String> _unleasedConnections  = new ConcurrentLinkedQueue<String>();
     private String _poolGuid = UUID.randomUUID().toString();
     
+    /**
+     * @param connectionConfig specified the JDBC parameters specified how new connections to the databases should be made
+     * @param creator given a {@link ConnectionConfig}, connects to the database.  Main implementation is {@link MockConnectionCreator}, 
+     *                but other implementations can be used for unit testing, etc.
+     * @param poolConfig contains configurations specifying the behaviour of the pool itself.
+     */
     public MortonianConnectionPool(ConnectionConfig connectionConfig, ConnectionCreator creator, PoolConfig poolConfig) {
         _connectionConfig = connectionConfig;
         _connectionCreator = creator;
@@ -54,7 +66,16 @@ public class MortonianConnectionPool implements ConnectionPool {
             }
         }
     }
-    
+
+    /**
+     * Gets a connection from the connection pool.  Returns null if the pool has reached its maximum size.  Ever Connection returned is actually a proxy of 
+     * the underlying {@link Connection} resource, which will allow the ConnectionPool to invalidate the lease and disconnect the proxy from the database,
+     * without disconnecting the underlying {@link Connection} resource.  
+     * 
+     * These proxies will also implement {@link PooledConnectionInfo}.
+     * 
+     * @return a valid connection from the pool.
+     */
     @Override
     public Connection getConnection() throws SQLException {
         ConnectionPoolEntry connectionEntry = getOrCreateInitializedConnectionEntry();
@@ -186,7 +207,9 @@ public class MortonianConnectionPool implements ConnectionPool {
     private PooledConnectionInfo buildPooledConnectionInfo(final ConnectionPoolEntry poolEntry) {
         return new PooledConnectionInfo() {
             
-            private boolean isLeaseValid = poolEntry.isLeased();
+            private boolean _isLeaseValid = poolEntry.isLeased();
+            private Long _timeStampCreated = poolEntry.getTimeStampCreated();
+            private Long _timeStampLeased = poolEntry.getTimeStampLeased();
 
             @Override
             public String getConnectionPoolUuid() {
@@ -200,12 +223,22 @@ public class MortonianConnectionPool implements ConnectionPool {
 
             @Override
             public void invalidateLease() {
-                isLeaseValid = false;
+                _isLeaseValid = false;
             }
 
             @Override
             public boolean isLeaseValid() {
-                return isLeaseValid;
+                return _isLeaseValid;
+            }
+
+            @Override
+            public Long getTimeStampCreated() {
+                return _timeStampCreated;
+            }
+
+            @Override
+            public Long getTimeStampLeased() {
+                return _timeStampLeased;
             }
             
         };
@@ -256,6 +289,10 @@ public class MortonianConnectionPool implements ConnectionPool {
         }
     }
     
+    /**
+     * @return the number of pre-built {@link Connection} resources that the pool has, ready to lease.  Note that {@link #getNumberOfConnectionsLeased()} +
+     * and {@link #getNumberOfConnectionsAvailable()} does not necessarily add up to the max size.  This is only the ready-to-go, pre-built connections.
+     */
     public synchronized int getNumberOfConnectionsAvailable() {
         // probably doesn't need to be synchronized, 
         // since every method on ConcurrentLinkedQueue should be atomic
@@ -263,6 +300,9 @@ public class MortonianConnectionPool implements ConnectionPool {
         return _unleasedConnections.size();
     }
     
+    /**
+     * @return the number of connections that the pool has currently leased out.
+     */
     public synchronized int getNumberOfConnectionsLeased() {
         int count = 0;
         for (ConnectionPoolEntry entry : _connectionEntries.values()) {
