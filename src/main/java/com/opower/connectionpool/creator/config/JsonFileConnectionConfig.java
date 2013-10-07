@@ -15,22 +15,21 @@ public class JsonFileConnectionConfig extends AbstractJsonFileConfigReader imple
     
     @Override
     public String getDriverClass() {
-        return (String) getOrReadJson().get("driverClass");
+        return getStringValue("driverClass");
     }
 
     @Override
     public String getJdbcUrl() {
-        return (String) getOrReadJson().get("jdbcUrl");
+        return getStringValue("jdbcUrl");
     }
 
     @Override
     public String getPassword() {
-        return (String) getOrReadJson().get("password");
+        return getStringValue("password");
     }
 
     @Override
     public String getUser() {
-        return (String) getOrReadJson().get("user");
+        return getStringValue("user");
     }
-
 }

@@ -33,13 +33,46 @@ public class SimpleConnectionPool implements ConnectionPool {
         _connectionConfig = connectionConfig;
         _connectionCreator = creator;
         _poolConfig = poolConfig;
+        
+        int initialPoolSize = poolConfig.getInitialPoolSize();
+        if (initialPoolSize > 0) {
+            for (int i = 0; i < initialPoolSize; i++) {
+                try {
+                    creatNewConnectionEntryAndInitializeConnection();
+                } catch (SQLException e) {
+                    _log.error("Error provisioning initial connections "+e,e);
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
     
     @Override
     public Connection getConnection() throws SQLException {
-        
+        ConnectionPoolEntry connectionEntry = getConnectionEntry();
+        if (null == connectionEntry) {
+            return null;
+        }
+        if (_connectionsAvailable.size() == 0) {
+            while (shouldMoreBeProactivelyAcquired()) {
+                creatNewConnectionEntryAndInitializeConnection();
+            }
+        }
+        return buildProxiedConnection(connectionEntry); 
+    }
+
+    private synchronized boolean shouldMoreBeProactivelyAcquired() {
+        boolean shouldMoreBeProactivelyAcquired = (_createdConnections.size() < _poolConfig.getMaxPoolSize()) && (_connectionsAvailable.size() < _poolConfig.getAcquireIncrement());
+        _log.debug("testing if we should proactively acquire connections.  Number created is "+_createdConnections.size()
+                +", max pool size is "+_poolConfig.getMaxPoolSize()
+                +", connections available is "+_connectionsAvailable.size()
+                +", and acquire increment is "+_poolConfig.getAcquireIncrement()
+                +" answer is "+shouldMoreBeProactivelyAcquired);
+        return shouldMoreBeProactivelyAcquired;
+    }
+
+    private ConnectionPoolEntry getConnectionEntry() throws SQLException {
         ConnectionPoolEntry connectionEntry = null;
-        boolean needsNewConnection = false;
         
         synchronized (this) {
             if (!_connectionsAvailable.isEmpty()) {
@@ -50,10 +83,7 @@ public class SimpleConnectionPool implements ConnectionPool {
             } else {
                 if (_createdConnections.size() < _poolConfig.getMaxPoolSize()) {
                     _log.debug("pool too small.  providing newly created connection from pool");
-                    connectionEntry = new ConnectionPoolEntry();
-                    _createdConnections.put(connectionEntry.getConnectionUuid(), connectionEntry);
-                    needsNewConnection = true;
-                    connectionEntry.setLeased(true);
+                    connectionEntry = createNewConnectionEntry(true);
                 } else {
                     // Or block, or throw exception, or ....
                     _log.debug("All connections handed out.  Returning null, rather than providing connection.");
@@ -61,15 +91,25 @@ public class SimpleConnectionPool implements ConnectionPool {
             }
         }
         
-        if (null == connectionEntry) {
-            return null;
-        } else {
-            if (needsNewConnection) {
-                Connection rawConnection = _connectionCreator.createConnection(_connectionConfig);
-                connectionEntry.setRawConnection(rawConnection);
-            }
-            return buildProxiedConnection(connectionEntry);
+        if (null != connectionEntry && null == connectionEntry.getRawConnection()) {
+            connectionEntry.setRawConnection(_connectionCreator.createConnection(_connectionConfig));
         }
+        return connectionEntry;
+    }
+
+    private void creatNewConnectionEntryAndInitializeConnection() throws SQLException {
+        ConnectionPoolEntry newConnectionEntry = createNewConnectionEntry(false);
+        newConnectionEntry.setRawConnection(_connectionCreator.createConnection(_connectionConfig));
+    }
+
+    private synchronized ConnectionPoolEntry createNewConnectionEntry(boolean lease) {
+        ConnectionPoolEntry connectionEntry = new ConnectionPoolEntry();
+        _createdConnections.put(connectionEntry.getConnectionUuid(), connectionEntry);
+        connectionEntry.setLeased(lease);
+        if (!lease) {
+            _connectionsAvailable.add(connectionEntry.getConnectionUuid());
+        }
+        return connectionEntry;
     }
 
     public class ConnectionInvocationHandler implements InvocationHandler {
@@ -101,7 +141,7 @@ public class SimpleConnectionPool implements ConnectionPool {
     private PooledConnectionInfo buildPooledConnectionInfo(final ConnectionPoolEntry poolEntry) {
         return new PooledConnectionInfo() {
             
-            private boolean isLeaseValid = true;
+            private boolean isLeaseValid = poolEntry.isLeased();
 
             @Override
             public String getConnectionPoolUuid() {
@@ -128,9 +168,9 @@ public class SimpleConnectionPool implements ConnectionPool {
     
     public class ConnectionPoolEntry {
 
-        private boolean _isLeased;
+        private boolean _isLeased = true;
         private String _connectionUuid = UUID.randomUUID().toString(); 
-        private Connection _rawConnection;
+        private Connection _rawConnection = null;
         
         public String getConnectionUuid() {
             return _connectionUuid;
@@ -174,25 +214,21 @@ public class SimpleConnectionPool implements ConnectionPool {
         }
     }
     
-    public int getNumberOfConnectionsAvailable() {
-        synchronized (this) { 
-            // probably doesn't need to be in a synchronized block, 
-            // since every method on ConcurrentLinkedQueue should be atomic
-            // but, better safe than sorry
-            return _connectionsAvailable.size();
-        }
+    public synchronized int getNumberOfConnectionsAvailable() {
+        // probably doesn't need to be synchronized, 
+        // since every method on ConcurrentLinkedQueue should be atomic
+        // but, better safe than sorry
+        return _connectionsAvailable.size();
     }
     
-    public int getNumberOfConnectionsLeased() {
-        synchronized (this) { 
-            int count = 0;
-            for (ConnectionPoolEntry entry : _createdConnections.values()) {
-                if (entry.isLeased()) {
-                    count++;
-                }   
-            }
-            return count;
+    public synchronized int getNumberOfConnectionsLeased() {
+        int count = 0;
+        for (ConnectionPoolEntry entry : _createdConnections.values()) {
+            if (entry.isLeased()) {
+                count++;
+            }   
         }
+        return count;
     }
 
 }

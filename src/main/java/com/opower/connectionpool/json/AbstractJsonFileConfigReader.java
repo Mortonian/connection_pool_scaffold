@@ -35,5 +35,19 @@ public abstract class AbstractJsonFileConfigReader {
         return _parsedFile;
     }
 
+    protected String getStringValue(String propertyName) {
+        return (String) getOrReadJson().get(propertyName);
+    }
+    
+    protected int getIntWithDefault(String propertyName, int defaultValue) {
+        String maxPoolSizeString = (String) getOrReadJson().get(propertyName);
+        try {
+            defaultValue = Integer.valueOf(maxPoolSizeString);
+        } catch (Exception e) {
+            getLogger().error("Trouble reading int from "+propertyName+", value was "+maxPoolSizeString, e);            
+        }
+        return defaultValue;
+    }
+
     protected abstract Logger getLogger();
 }

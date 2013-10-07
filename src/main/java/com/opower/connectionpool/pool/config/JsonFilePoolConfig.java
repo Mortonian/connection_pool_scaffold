@@ -16,14 +16,16 @@ public class JsonFilePoolConfig extends AbstractJsonFileConfigReader implements 
     
     @Override
     public int getMaxPoolSize() {
-        int maxPoolSize = 1;
-        String maxPoolSizeString = (String) getOrReadJson().get("maxPoolSize");
-        try {
-            maxPoolSize = Integer.valueOf(maxPoolSizeString);
-        } catch (Exception e) {
-            _log.error("Trouble reading int from "+maxPoolSizeString, e);            
-        }
-        return maxPoolSize;
+        return getIntWithDefault("maxPoolSize", 1);
     }
 
+    @Override
+    public int getAcquireIncrement() {
+        return getIntWithDefault("acquireIncrement", 0);
+    }
+
+    @Override
+    public int getInitialPoolSize() {
+        return getIntWithDefault("initialPoolSize", 0);
+    }
 }

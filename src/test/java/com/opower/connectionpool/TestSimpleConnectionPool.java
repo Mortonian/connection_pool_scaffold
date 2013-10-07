@@ -164,7 +164,164 @@ public class TestSimpleConnectionPool {
             Assert.fail("Exception: "+e);
         }  
     }
+    
 
+    @Test
+    public void testAcquireIncrementZero() {
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(5);
+        poolConfig.setAcquireIncrement(0);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        Connection connection;
+        try {
+            Assert.assertEquals("Number of connections available should be 0", 0, connectionPool.getNumberOfConnectionsAvailable());
+            connection = connectionPool.getConnection();
+            
+            Assert.assertEquals("Number of connections available should be 0", 0, connectionPool.getNumberOfConnectionsAvailable());
+            connection = connectionPool.getConnection();
+            
+            Assert.assertEquals("Number of connections available should be 0", 0, connectionPool.getNumberOfConnectionsAvailable());
+        } catch (SQLException e) {
+            _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
+        } 
+        
+    }
+
+    @Test
+    public void testAcquireIncrementTwo() {
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(6);
+        poolConfig.setAcquireIncrement(2);
+
+        EasyMock.replay(mockConnectionCreator);
+        
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+
+        EasyMock.verify(mockConnectionCreator);
+        
+        Connection connection;
+        try {
+            Assert.assertEquals("Number of connections handed out after get connection should be 0", 0, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 0", 0, connectionPool.getNumberOfConnectionsAvailable());
+            
+            _log.info("first getting connection");
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection).times(3);
+            EasyMock.replay(mockConnectionCreator);
+            
+            connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 1", 1, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 2", 2, connectionPool.getNumberOfConnectionsAvailable());
+            
+            _log.info("second getting connection");
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 2", 2, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 1", 1, connectionPool.getNumberOfConnectionsAvailable());
+
+            _log.info("third getting connection");
+            
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection).times(2);
+            EasyMock.replay(mockConnectionCreator);
+            
+            connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 3", 3, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 2", 2, connectionPool.getNumberOfConnectionsAvailable());
+        } catch (SQLException e) {
+            _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
+        } 
+        
+    }    
+    
+    @Test
+    public void testAcquireIncrementTwoWithInitialSizeTwo() {
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = EasyMock.createMock(ConnectionCreator.class);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(6);
+        poolConfig.setAcquireIncrement(2);
+        poolConfig.setInitialPoolSize(2);
+
+        Connection connection;
+        try {
+
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection).times(2);
+            EasyMock.replay(mockConnectionCreator);
+            
+            SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 0", 0, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 2", 2, connectionPool.getNumberOfConnectionsAvailable());
+            
+            _log.info("first getting connection");
+
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 1", 1, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 1", 1, connectionPool.getNumberOfConnectionsAvailable());
+
+            _log.info("second getting connection");
+            
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection).times(2);
+            EasyMock.replay(mockConnectionCreator);
+            
+            connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 2", 2, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 2", 2, connectionPool.getNumberOfConnectionsAvailable());
+
+            _log.info("third getting connection");
+            
+            EasyMock.reset(mockConnectionCreator);
+            EasyMock.replay(mockConnectionCreator);
+            
+            connection = connectionPool.getConnection();
+
+            EasyMock.verify(mockConnectionCreator);
+            
+            Assert.assertEquals("Number of connections handed out after get connection should be 3", 3, connectionPool.getNumberOfConnectionsLeased());
+            Assert.assertEquals("Number of connections available should be 1", 1, connectionPool.getNumberOfConnectionsAvailable());
+        } catch (SQLException e) {
+            _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
+        } 
+        
+    }
+    
     @Test
     public void testConnectionPoolReturnsNullWhenMaxed() {
         ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
