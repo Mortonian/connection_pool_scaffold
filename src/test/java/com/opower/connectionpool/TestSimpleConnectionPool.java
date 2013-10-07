@@ -11,7 +11,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import com.opower.connectionpool.pool.PooledConnectionInfo;
-import com.opower.connectionpool.pool.SimpleConnectionPool;
+import com.opower.connectionpool.pool.MortonianConnectionPool;
 import com.opower.connectionpool.pool.config.SimplePoolConfig;
 
 public class TestSimpleConnectionPool {
@@ -25,7 +25,7 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(0);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -51,7 +51,7 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(1);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -86,7 +86,7 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(1);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
 
         Connection connection;
         try {
@@ -120,7 +120,7 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(2);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -174,7 +174,7 @@ public class TestSimpleConnectionPool {
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(5);
         poolConfig.setAcquireIncrement(0);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         Connection connection;
         try {
@@ -203,7 +203,7 @@ public class TestSimpleConnectionPool {
 
         EasyMock.replay(mockConnectionCreator);
         
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
 
         EasyMock.verify(mockConnectionCreator);
         
@@ -272,7 +272,7 @@ public class TestSimpleConnectionPool {
             EasyMock.expect(mockConnectionCreator.createConnection(mockConnectionConfig)).andReturn(mockConnection).times(2);
             EasyMock.replay(mockConnectionCreator);
             
-            SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+            MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
 
             EasyMock.verify(mockConnectionCreator);
             
@@ -329,7 +329,7 @@ public class TestSimpleConnectionPool {
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
         SimplePoolConfig poolConfig = new SimplePoolConfig();
         poolConfig.setMaxPoolSize(10);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
         
         for (int i = 0; i < 10; i++) {
             Connection connection = null;

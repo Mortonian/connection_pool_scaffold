@@ -1,4 +1,4 @@
-package com.opower.connectionpool.pool;
+package com.opower.connectionpool;
 
 import java.sql.Connection;
 import java.sql.SQLException;
