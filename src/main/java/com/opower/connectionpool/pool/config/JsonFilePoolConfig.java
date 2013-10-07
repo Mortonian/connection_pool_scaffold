@@ -3,7 +3,7 @@ package com.opower.connectionpool.pool.config;
 import org.apache.log4j.Logger;
 
 import com.opower.connectionpool.PoolConfig;
-import com.opower.connectionpool.creator.config.JsonFileConnectionConfig;
+import com.opower.connectionpool.connection.config.JsonFileConnectionConfig;
 import com.opower.connectionpool.json.AbstractJsonFileConfigReader;
 
 public class JsonFilePoolConfig extends AbstractJsonFileConfigReader implements PoolConfig {

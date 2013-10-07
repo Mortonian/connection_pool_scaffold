@@ -1,4 +1,4 @@
-package com.opower.connectionpool.creator;
+package com.opower.connectionpool.connection;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,9 +9,9 @@ import org.apache.log4j.Logger;
 import com.opower.connectionpool.ConnectionCreator;
 import com.opower.connectionpool.ConnectionConfig;
 
-public class BasicConnectionCreator implements ConnectionCreator {
+public class MortonianConnectionCreator implements ConnectionCreator {
 
-    private static Logger _log = Logger.getLogger(BasicConnectionCreator.class);
+    private static Logger _log = Logger.getLogger(MortonianConnectionCreator.class);
     
     @Override
     public Connection createConnection(ConnectionConfig connectionConfig) throws SQLException {

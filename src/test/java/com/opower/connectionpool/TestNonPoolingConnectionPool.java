@@ -10,9 +10,9 @@ import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import com.opower.connectionpool.creator.BasicConnectionCreator;
-import com.opower.connectionpool.creator.config.JsonFileConnectionConfig;
-import com.opower.connectionpool.creator.config.SimpleConnectionConfig;
+import com.opower.connectionpool.connection.MortonianConnectionCreator;
+import com.opower.connectionpool.connection.config.JsonFileConnectionConfig;
+import com.opower.connectionpool.connection.config.SimpleConnectionConfig;
 
 public class TestNonPoolingConnectionPool {
     
@@ -68,7 +68,7 @@ public class TestNonPoolingConnectionPool {
         try {
             JsonFileConnectionConfig connectionConfig = new JsonFileConnectionConfig();
             connectionConfig.setFile("/tmp/dbconection.json");
-            ConnectionCreator connectionCreator = new BasicConnectionCreator();
+            ConnectionCreator connectionCreator = new MortonianConnectionCreator();
             NonPoolingConnectionPool pool = new NonPoolingConnectionPool(connectionConfig, connectionCreator);
             Connection connect = pool.getConnection();
             Statement statement = connect.createStatement();
