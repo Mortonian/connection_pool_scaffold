@@ -41,7 +41,7 @@ public class SimpleConnectionConfig implements ConnectionConfig {
         return _user;
     }
     
-    public void getUser(String user) {
+    public void setUser(String user) {
         _user = user;
     }
 }
