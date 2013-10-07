@@ -102,18 +102,4 @@ public class TestSimpleConnectionPool {
             _log.error("Error testing zero-sized connection pool", e);
         } 
     }
-    
-    public static class MockConnectionCreator implements ConnectionCreator {
-        
-        private Connection _mockConnection;
-        
-        public MockConnectionCreator(Connection mockConnection) {
-            _mockConnection = mockConnection;
-        }
-
-        @Override
-        public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
-            return _mockConnection;
-        }
-    }
 }

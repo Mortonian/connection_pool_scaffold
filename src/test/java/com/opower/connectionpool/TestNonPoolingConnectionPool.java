@@ -26,7 +26,26 @@ public class TestNonPoolingConnectionPool {
             SimpleConnectionDescriptor descriptor = new SimpleConnectionDescriptor();
             descriptor.setDriverClass("org.postgresql.Driver");
             descriptor.setJdbcUrl("jdbc:postgresql://"+TestConstants.HOSTNAME+"/"+TestConstants.DATABASE+"?"+ "user="+TestConstants.USERNAME);
-            ConnectionCreator connectionCreator = new MockConnectionCreator();
+            
+            Connection mockConnection = EasyMock.createMock(Connection.class);
+            Statement mockStatement = EasyMock.createMock(Statement.class);
+            ResultSet mockResultSet = EasyMock.createMock(ResultSet.class);
+            EasyMock.expect(mockConnection.createStatement()).andReturn(mockStatement);
+            
+            EasyMock.expect(mockStatement.executeQuery(TestConstants.BASIC_COUNT_QUERY)).andReturn(mockResultSet);
+            
+            EasyMock.expect(mockResultSet.next()).andReturn(true);
+            EasyMock.expect(mockResultSet.getString("count")).andReturn("1");
+            
+            mockConnection.close();
+            
+            EasyMock.expectLastCall();
+            
+            EasyMock.replay(mockConnection);
+            EasyMock.replay(mockStatement);
+            EasyMock.replay(mockResultSet);
+            
+            ConnectionCreator connectionCreator = new MockConnectionCreator(mockConnection);
             NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
             Connection connect = pool.getConnection();
             Statement statement = connect.createStatement();
@@ -37,6 +56,9 @@ public class TestNonPoolingConnectionPool {
             _log.info("Found "+count+" items");
             pool.releaseConnection(connect);
             EasyMock.verify(connect);
+            EasyMock.verify(mockConnection);
+            EasyMock.verify(mockStatement);
+            EasyMock.verify(mockResultSet);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,33 +83,6 @@ public class TestNonPoolingConnectionPool {
             Assert.assertTrue("Connection should be closed after realsing to a non-pooling pool", connect.isClosed());
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-    
-    public static class MockConnectionCreator implements ConnectionCreator {
-
-        @Override
-        public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
-            
-            Connection mockConnection = EasyMock.createMock(Connection.class);
-            Statement mockStatement = EasyMock.createMock(Statement.class);
-            ResultSet mockResultSet = EasyMock.createMock(ResultSet.class);
-            EasyMock.expect(mockConnection.createStatement()).andReturn(mockStatement);
-            
-            EasyMock.expect(mockStatement.executeQuery(TestConstants.BASIC_COUNT_QUERY)).andReturn(mockResultSet);
-            
-            EasyMock.expect(mockResultSet.next()).andReturn(true);
-            EasyMock.expect(mockResultSet.getString("count")).andReturn("1");
-            
-            mockConnection.close();
-            
-            EasyMock.expectLastCall();
-            
-            EasyMock.replay(mockConnection);
-            EasyMock.replay(mockStatement);
-            EasyMock.replay(mockResultSet);
-
-            return mockConnection;
         }
     }
 }
