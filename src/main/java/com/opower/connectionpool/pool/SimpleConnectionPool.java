@@ -99,6 +99,8 @@ public class SimpleConnectionPool implements ConnectionPool {
 
     private PooledConnectionInfo buildPooledConnectionInfo(final ConnectionPoolEntry poolEntry) {
         return new PooledConnectionInfo() {
+            
+            private boolean isLeaseValid = true;
 
             @Override
             public String getConnectionPoolUuid() {
@@ -112,12 +114,12 @@ public class SimpleConnectionPool implements ConnectionPool {
 
             @Override
             public void invalidateLease() {
-                poolEntry.setLeased(false);
+                isLeaseValid = false;
             }
 
             @Override
             public boolean isLeaseValid() {
-                return poolEntry.isLeased();
+                return isLeaseValid;
             }
             
         };
