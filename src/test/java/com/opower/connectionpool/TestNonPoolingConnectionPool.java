@@ -10,9 +10,9 @@ import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import com.opower.connectionpool.connectionconfig.JsonFileConnectionConfig;
+import com.opower.connectionpool.connectionconfig.SimpleConnectionConfig;
 import com.opower.connectionpool.creator.BasicConnectionCreator;
-import com.opower.connectionpool.descriptor.JsonFileConnectionDescriptor;
-import com.opower.connectionpool.descriptor.SimpleConnectionDescriptor;
 import com.opower.connectionpool.pool.NonPoolingConnectionPool;
 
 public class TestNonPoolingConnectionPool {
@@ -22,9 +22,9 @@ public class TestNonPoolingConnectionPool {
     @Test
     public void testMockedConnection() {        
         try {
-            SimpleConnectionDescriptor descriptor = new SimpleConnectionDescriptor();
-            descriptor.setDriverClass("org.postgresql.Driver");
-            descriptor.setJdbcUrl("jdbc:postgresql://"+TestConstants.HOSTNAME+"/"+TestConstants.DATABASE+"?"+ "user="+TestConstants.USERNAME);
+            SimpleConnectionConfig connectionConfig = new SimpleConnectionConfig();
+            connectionConfig.setDriverClass("org.postgresql.Driver");
+            connectionConfig.setJdbcUrl("jdbc:postgresql://"+TestConstants.HOSTNAME+"/"+TestConstants.DATABASE+"?"+ "user="+TestConstants.USERNAME);
             
             Connection mockConnection = EasyMock.createMock(Connection.class);
             Statement mockStatement = EasyMock.createMock(Statement.class);
@@ -45,7 +45,7 @@ public class TestNonPoolingConnectionPool {
             EasyMock.replay(mockResultSet);
             
             ConnectionCreator connectionCreator = new MockConnectionCreator(mockConnection);
-            NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
+            NonPoolingConnectionPool pool = new NonPoolingConnectionPool(connectionConfig, connectionCreator);
             Connection connect = pool.getConnection();
             Statement statement = connect.createStatement();
             ResultSet resultSet = statement.executeQuery(TestConstants.BASIC_COUNT_QUERY);
@@ -67,10 +67,10 @@ public class TestNonPoolingConnectionPool {
     @Test
     public void testActualConnectionViaJsonFile() {        
         try {
-            JsonFileConnectionDescriptor descriptor = new JsonFileConnectionDescriptor();
-            descriptor.setFile("/tmp/dbconection.json");
+            JsonFileConnectionConfig connectionConfig = new JsonFileConnectionConfig();
+            connectionConfig.setFile("/tmp/dbconection.json");
             ConnectionCreator connectionCreator = new BasicConnectionCreator();
-            NonPoolingConnectionPool pool = new NonPoolingConnectionPool(descriptor, connectionCreator);
+            NonPoolingConnectionPool pool = new NonPoolingConnectionPool(connectionConfig, connectionCreator);
             Connection connect = pool.getConnection();
             Statement statement = connect.createStatement();
             ResultSet resultSet = statement.executeQuery(TestConstants.BASIC_COUNT_QUERY);

@@ -1,8 +1,8 @@
-package com.opower.connectionpool.descriptor;
+package com.opower.connectionpool.connectionconfig;
 
-import com.opower.connectionpool.ConnectionDescriptor;
+import com.opower.connectionpool.ConnectionConfig;
 
-public class SimpleConnectionDescriptor implements ConnectionDescriptor {
+public class SimpleConnectionConfig implements ConnectionConfig {
 
     private String _driverClass;
     private String _jdbcUrl;

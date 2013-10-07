@@ -6,17 +6,17 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 import com.opower.connectionpool.ConnectionCreator;
-import com.opower.connectionpool.ConnectionDescriptor;
+import com.opower.connectionpool.ConnectionConfig;
 import com.opower.connectionpool.ConnectionPool;
 
 public class NonPoolingConnectionPool implements ConnectionPool {
 
     private static Logger _log = Logger.getLogger(NonPoolingConnectionPool.class);
     
-    public ConnectionDescriptor _desciptor;
+    public ConnectionConfig _desciptor;
     public ConnectionCreator _creator;
     
-    public NonPoolingConnectionPool(ConnectionDescriptor desciptor, ConnectionCreator creator) {
+    public NonPoolingConnectionPool(ConnectionConfig desciptor, ConnectionCreator creator) {
         _desciptor = desciptor;
         _creator = creator;
     }

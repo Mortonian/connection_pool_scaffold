@@ -5,5 +5,5 @@ import java.sql.SQLException;
 
 public interface ConnectionCreator {
 
-    Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException;
+    Connection createConnection(ConnectionConfig connectionConfig) throws SQLException;
 }

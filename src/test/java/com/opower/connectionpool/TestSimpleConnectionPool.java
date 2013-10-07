@@ -19,10 +19,10 @@ public class TestSimpleConnectionPool {
     
     @Test
     public void testZeroSizedConnectionPool() {
-        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 0);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 0);
         
         Connection connection;
         try {
@@ -43,10 +43,10 @@ public class TestSimpleConnectionPool {
 
     @Test
     public void testOneSizedConnectionPool() {
-        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 1);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 1);
         
         Connection connection;
         try {
@@ -75,11 +75,11 @@ public class TestSimpleConnectionPool {
     @Test
     public void testConnectionReleasing() {
         
-        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         Statement mockStatement = EasyMock.createMock(Statement.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 1);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 1);
 
         Connection connection;
         try {
@@ -108,10 +108,10 @@ public class TestSimpleConnectionPool {
 
     @Test
     public void testTwoSizedConnectionPool() {
-        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 2);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 2);
         
         Connection connection;
         try {
@@ -158,10 +158,10 @@ public class TestSimpleConnectionPool {
 
     @Test
     public void testConnectionPoolReturnsNullWhenMaxed() {
-        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
         Connection mockConnection = EasyMock.createMock(Connection.class);
         ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
-        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 10);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionConfig, mockConnectionCreator, 10);
         
         for (int i = 0; i < 10; i++) {
             Connection connection = null;

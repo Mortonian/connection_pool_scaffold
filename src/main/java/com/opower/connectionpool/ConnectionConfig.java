@@ -1,6 +1,6 @@
 package com.opower.connectionpool;
 
-public interface ConnectionDescriptor {
+public interface ConnectionConfig {
     
     public String getDriverClass(); 
     public String getJdbcUrl(); 

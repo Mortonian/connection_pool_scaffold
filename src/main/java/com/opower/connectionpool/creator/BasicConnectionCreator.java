@@ -7,19 +7,19 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 import com.opower.connectionpool.ConnectionCreator;
-import com.opower.connectionpool.ConnectionDescriptor;
+import com.opower.connectionpool.ConnectionConfig;
 
 public class BasicConnectionCreator implements ConnectionCreator {
 
     private static Logger _log = Logger.getLogger(BasicConnectionCreator.class);
     
     @Override
-    public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
+    public Connection createConnection(ConnectionConfig connectionConfig) throws SQLException {
 
-        String driverClass = connectionDescriptor.getDriverClass();
-        String jdbcUrl = connectionDescriptor.getJdbcUrl();
-        String user = connectionDescriptor.getUser();
-        String password = connectionDescriptor.getPassword();
+        String driverClass = connectionConfig.getDriverClass();
+        String jdbcUrl = connectionConfig.getJdbcUrl();
+        String user = connectionConfig.getUser();
+        String password = connectionConfig.getPassword();
         
         try {            
             Class.forName(driverClass);

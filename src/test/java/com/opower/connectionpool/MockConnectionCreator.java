@@ -12,7 +12,7 @@ public class MockConnectionCreator implements ConnectionCreator {
     }
 
     @Override
-    public Connection createConnection(ConnectionDescriptor connectionDescriptor) throws SQLException {
+    public Connection createConnection(ConnectionConfig connectionConfig) throws SQLException {
         return _mockConnection;
     }
 }

@@ -14,23 +14,23 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.log4j.Logger;
 
 import com.opower.connectionpool.ConnectionCreator;
-import com.opower.connectionpool.ConnectionDescriptor;
+import com.opower.connectionpool.ConnectionConfig;
 import com.opower.connectionpool.ConnectionPool;
 
 public class SimpleConnectionPool implements ConnectionPool {
 
     private static Logger _log = Logger.getLogger(SimpleConnectionPool.class);
 
-    private ConnectionDescriptor _desciptor;
-    private ConnectionCreator _creator;
+    private ConnectionConfig _connectionConfig;
+    private ConnectionCreator _connectionCreator;
     private int _poolSize = 1;
     private Map<String, ConnectionPoolEntry> _createdConnections = new ConcurrentHashMap<String, ConnectionPoolEntry>();
     private Queue<String> _connectionsAvailable  = new ConcurrentLinkedQueue<String>();
     private String _poolGuid = UUID.randomUUID().toString();
     
-    public SimpleConnectionPool(ConnectionDescriptor desciptor, ConnectionCreator creator, int poolSize) {
-        _desciptor = desciptor;
-        _creator = creator;
+    public SimpleConnectionPool(ConnectionConfig connectionConfig, ConnectionCreator creator, int poolSize) {
+        _connectionConfig = connectionConfig;
+        _connectionCreator = creator;
         _poolSize = poolSize;
     }
     
@@ -64,7 +64,7 @@ public class SimpleConnectionPool implements ConnectionPool {
             return null;
         } else {
             if (needsNewConnection) {
-                Connection rawConnection = _creator.createConnection(_desciptor);
+                Connection rawConnection = _connectionCreator.createConnection(_connectionConfig);
                 connectionEntry.setRawConnection(rawConnection);
             }
             return buildProxiedConnection(connectionEntry);

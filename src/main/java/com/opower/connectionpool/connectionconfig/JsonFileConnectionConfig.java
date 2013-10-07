@@ -1,4 +1,4 @@
-package com.opower.connectionpool.descriptor;
+package com.opower.connectionpool.connectionconfig;
 
 import java.io.FileReader;
 
@@ -6,11 +6,11 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import com.opower.connectionpool.ConnectionDescriptor;
+import com.opower.connectionpool.ConnectionConfig;
 
-public class JsonFileConnectionDescriptor implements ConnectionDescriptor {
+public class JsonFileConnectionConfig implements ConnectionConfig {
 
-    private static Logger _log = Logger.getLogger(JsonFileConnectionDescriptor.class);
+    private static Logger _log = Logger.getLogger(JsonFileConnectionConfig.class);
     
     private String _fileName;
     private JSONObject _parsedFile;
