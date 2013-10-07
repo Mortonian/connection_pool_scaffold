@@ -37,6 +37,7 @@ public class TestSimpleConnectionPool {
             Assert.assertEquals("Number of connections available after release connection should be 0", 0, connectionPool.getNumberOfConnectionsAvailable());
         } catch (SQLException e) {
             _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
         }  
     }
 
@@ -67,6 +68,7 @@ public class TestSimpleConnectionPool {
             Assert.assertEquals("Should be the same connection, got UUIDs: "+uuid1+", "+uuid2, uuid1, uuid2);
         } catch (SQLException e) {
             _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
         }  
     }
 
@@ -100,6 +102,7 @@ public class TestSimpleConnectionPool {
             EasyMock.verify(mockConnection);
         } catch (SQLException e) {
             _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
         } 
     }
 
@@ -149,6 +152,35 @@ public class TestSimpleConnectionPool {
             
         } catch (SQLException e) {
             _log.error("Error testing zero-sized connection pool", e);
+            Assert.fail("Exception: "+e);
         }  
+    }
+
+    @Test
+    public void testConnectionPoolReturnsNullWhenMaxed() {
+        ConnectionDescriptor mockConnectionDescriptor = EasyMock.createMock(ConnectionDescriptor.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimpleConnectionPool connectionPool = new SimpleConnectionPool(mockConnectionDescriptor, mockConnectionCreator, 10);
+        
+        for (int i = 0; i < 10; i++) {
+            Connection connection = null;
+            try {
+                connection = connectionPool.getConnection();
+            } catch (SQLException e) {
+                _log.error("Error getting connection", e);
+                Assert.fail("Exception: "+e);
+            }
+            Assert.assertTrue("connection should be valid", ((PooledConnectionInfo)connection).isLeaseValid());
+        }
+        
+        Connection connection = null;
+        try {
+            connection = connectionPool.getConnection();
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+        Assert.assertNull("11th connection should null", connection);
     }
 }

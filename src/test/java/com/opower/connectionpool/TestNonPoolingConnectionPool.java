@@ -60,6 +60,7 @@ public class TestNonPoolingConnectionPool {
             EasyMock.verify(mockResultSet);
         } catch (Exception e) {
             e.printStackTrace();
+            Assert.fail("Exception: "+e);
         }
     }
 
@@ -82,6 +83,7 @@ public class TestNonPoolingConnectionPool {
             Assert.assertTrue("Connection should be closed after realsing to a non-pooling pool", connect.isClosed());
         } catch (Exception e) {
             e.printStackTrace();
+            Assert.fail("Exception: "+e);
         }
     }
 }
