@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import com.opower.connectionpool.pool.PooledConnectionInfo;
 import com.opower.connectionpool.pool.SimpleConnectionPool;
-import com.opower.connectionpool.poolconfig.SimplePoolConfig;
+import com.opower.connectionpool.pool.config.SimplePoolConfig;
 
 public class TestSimpleConnectionPool {
 

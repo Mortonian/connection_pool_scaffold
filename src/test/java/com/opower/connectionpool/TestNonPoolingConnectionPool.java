@@ -10,9 +10,9 @@ import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import com.opower.connectionpool.connectionconfig.JsonFileConnectionConfig;
-import com.opower.connectionpool.connectionconfig.SimpleConnectionConfig;
 import com.opower.connectionpool.creator.BasicConnectionCreator;
+import com.opower.connectionpool.creator.config.JsonFileConnectionConfig;
+import com.opower.connectionpool.creator.config.SimpleConnectionConfig;
 import com.opower.connectionpool.pool.NonPoolingConnectionPool;
 
 public class TestNonPoolingConnectionPool {

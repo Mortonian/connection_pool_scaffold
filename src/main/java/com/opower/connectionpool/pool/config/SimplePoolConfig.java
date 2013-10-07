@@ -1,4 +1,4 @@
-package com.opower.connectionpool.poolconfig;
+package com.opower.connectionpool.pool.config;
 
 import com.opower.connectionpool.PoolConfig;
 
