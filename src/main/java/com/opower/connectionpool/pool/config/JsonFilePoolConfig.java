@@ -28,4 +28,19 @@ public class JsonFilePoolConfig extends AbstractJsonFileConfigReader implements 
     public int getInitialPoolSize() {
         return getIntWithDefault("initialPoolSize", 0);
     }
+
+    @Override
+    public boolean getAutoCommit() {
+        return getBooleanValueWithDefault("autoCommit", false);
+    }
+
+    @Override
+    public int getRetryAttempts() {
+        return getIntWithDefault("retryAttempts", 0);
+    }
+
+    @Override
+    public int getRetryWaitTimeInMillis() {
+        return getIntWithDefault("retryWaitTimeInMillis", 300);
+    }
 }

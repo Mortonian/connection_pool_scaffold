@@ -38,13 +38,23 @@ public abstract class AbstractJsonFileConfigReader {
     protected String getStringValue(String propertyName) {
         return (String) getOrReadJson().get(propertyName);
     }
+
+    protected Boolean getBooleanValueWithDefault(String propertyName, boolean defaultValue) {
+        String boolAsString = (String) getOrReadJson().get(propertyName);
+        try {
+            defaultValue = Boolean.valueOf(boolAsString);
+        } catch (Exception e) {
+            getLogger().error("Trouble reading boolean from "+propertyName+", value was "+boolAsString, e);            
+        }
+        return defaultValue;
+    }
     
     protected int getIntWithDefault(String propertyName, int defaultValue) {
-        String maxPoolSizeString = (String) getOrReadJson().get(propertyName);
+        String intAsString = (String) getOrReadJson().get(propertyName);
         try {
-            defaultValue = Integer.valueOf(maxPoolSizeString);
+            defaultValue = Integer.valueOf(intAsString);
         } catch (Exception e) {
-            getLogger().error("Trouble reading int from "+propertyName+", value was "+maxPoolSizeString, e);            
+            getLogger().error("Trouble reading int from "+propertyName+", value was "+intAsString, e);            
         }
         return defaultValue;
     }

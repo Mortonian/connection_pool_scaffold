@@ -7,6 +7,9 @@ public class SimplePoolConfig implements PoolConfig {
     private int _maxPoolSize = 1;
     private int _acquireIncrement = 0;
     private int _initialPoolSize = 0;
+    private boolean _autoCommit = false;
+    private int _retryAttempts = 0;
+    private int _retryWaitTimeMillis = 300;
     
     @Override
     public int getMaxPoolSize() {
@@ -33,6 +36,33 @@ public class SimplePoolConfig implements PoolConfig {
 
     public void setInitialPoolSize(int initialPoolSize) {
         _initialPoolSize = initialPoolSize;
+    }
+
+    @Override
+    public boolean getAutoCommit() {
+        return _autoCommit;
+    }
+
+    public void setAutoCommit(boolean autoCommit) {
+        _autoCommit = autoCommit;
+    }
+
+    @Override
+    public int getRetryAttempts() {
+        return _retryAttempts;
+    }
+
+    public void setRetryAttempts(int retryAttempts) {
+        _retryAttempts = retryAttempts;
+    }
+
+    @Override
+    public int getRetryWaitTimeInMillis() {
+        return _retryWaitTimeMillis;
+    }
+
+    public void setRetryWaitTimeInMillis(int retryWaitTimeMillis) {
+        _retryWaitTimeMillis = retryWaitTimeMillis;
     }
 
 }

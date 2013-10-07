@@ -385,4 +385,280 @@ public class TestSimpleConnectionPool {
             Assert.fail("Exception: "+e);
         }        
     }
+
+    @Test
+    public void testAutoCommitDefaultOff() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection = connectionPool.getConnection();
+            
+            EasyMock.replay(mockConnection);
+            
+            connectionPool.releaseConnection(connection);
+            
+            EasyMock.verify(mockConnection);
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+    }
+
+
+    @Test
+    public void testAutoCommitOff() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setAutoCommit(false);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection = connectionPool.getConnection();
+            
+            EasyMock.replay(mockConnection);
+            
+            connectionPool.releaseConnection(connection);
+            
+            EasyMock.verify(mockConnection);
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+    }
+
+
+    @Test
+    public void testAutoCommitOn() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setAutoCommit(true);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection = connectionPool.getConnection();
+            
+            mockConnection.commit();
+            EasyMock.expectLastCall();
+            EasyMock.replay(mockConnection);
+            
+            connectionPool.releaseConnection(connection);
+            
+            EasyMock.verify(mockConnection);
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+    }
+    
+
+    @Test
+    public void testNoRetries() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(1);
+        poolConfig.setRetryAttempts(0);
+        poolConfig.setRetryWaitTimeInMillis(1000);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection1 = connectionPool.getConnection();
+            Assert.assertNotNull("I should get one connection", connection1);
+            
+            long beforeTime = System.currentTimeMillis();
+
+            Connection connection2 = connectionPool.getConnection();
+            
+            long afterTime = System.currentTimeMillis();
+            
+
+            Assert.assertNull("I should not get a secon connection", connection2);
+            Assert.assertTrue("Should not be retrying", afterTime - beforeTime < 10);
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+        
+    }
+
+
+    @Test
+    public void testOneRetry() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        int retryAttempts = 1;
+        int retryWaitTimeMillis = 1000;
+        poolConfig.setMaxPoolSize(1);
+        poolConfig.setRetryAttempts(retryAttempts);
+        poolConfig.setRetryWaitTimeInMillis(retryWaitTimeMillis);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection1 = connectionPool.getConnection();
+            Assert.assertNotNull("I should get one connection", connection1);
+            
+            long beforeTime = System.currentTimeMillis();
+
+            Connection connection2 = connectionPool.getConnection();
+            
+            long afterTime = System.currentTimeMillis();
+            
+
+            Assert.assertNull("I should not get a secon connection", connection2);
+            Assert.assertTrue("Should retry at least once", afterTime - beforeTime >= retryWaitTimeMillis);
+            Assert.assertTrue("Should retry only once", afterTime - beforeTime < (retryAttempts * retryWaitTimeMillis) + (0.5 * retryWaitTimeMillis));
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+    }
+
+    @Test
+    public void testManyRetries() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        int retryAttempts = 10;
+        int retryWaitTimeMillis = 1000;
+        poolConfig.setMaxPoolSize(1);
+        poolConfig.setRetryAttempts(retryAttempts);
+        poolConfig.setRetryWaitTimeInMillis(retryWaitTimeMillis);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection1 = connectionPool.getConnection();
+            Assert.assertNotNull("I should get one connection", connection1);
+            
+            long beforeTime = System.currentTimeMillis();
+
+            Connection connection2 = connectionPool.getConnection();
+            
+            long afterTime = System.currentTimeMillis();
+            
+
+            Assert.assertNull("I should not get a secon connection", connection2);
+            Assert.assertTrue("Should retry at least once", afterTime - beforeTime >= retryWaitTimeMillis);
+            Assert.assertTrue("Should retry only once", afterTime - beforeTime < (retryAttempts * retryWaitTimeMillis) + (0.5 * retryWaitTimeMillis));
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }
+    }  
+
+    @Test
+    public void testShutdownOnReleasedConnections() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(1);
+        poolConfig.setAutoCommit(true);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection = connectionPool.getConnection();
+            
+            mockConnection.commit();
+            EasyMock.expectLastCall();
+            EasyMock.replay(mockConnection);
+            
+            connectionPool.releaseConnection(connection);
+
+            Assert.assertFalse("Connection Pools should not be shutdown", connectionPool.isShutdown());
+            Assert.assertFalse("Connection should no longer be valid", ((PooledConnectionInfo)connection).isLeaseValid());
+
+            EasyMock.verify(mockConnection);
+            EasyMock.reset(mockConnection);
+            EasyMock.replay(mockConnection);
+            
+            connectionPool.shutdown();
+
+            Assert.assertTrue("Connection Pools should not be shutdown", connectionPool.isShutdown());
+            Assert.assertFalse("Connection should no longer be valid", ((PooledConnectionInfo)connection).isLeaseValid());
+
+            EasyMock.verify(mockConnection);
+            
+            try {
+                connection.createStatement();
+                Assert.fail("Should not be able to operate on a connection from a shutdown connection pool");
+            } catch (Exception e) {
+                _log.debug("Correctly got error working with connection post shutdown:"+e);
+            }
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }   
+    }
+
+    @Test
+    public void testShutdownOnUnreleasedConnections() {
+
+        ConnectionConfig mockConnectionConfig = EasyMock.createMock(ConnectionConfig.class);
+        Connection mockConnection = EasyMock.createMock(Connection.class);
+        ConnectionCreator mockConnectionCreator = new MockConnectionCreator(mockConnection);
+        SimplePoolConfig poolConfig = new SimplePoolConfig();
+        poolConfig.setMaxPoolSize(1);
+        poolConfig.setAutoCommit(true);
+        MortonianConnectionPool connectionPool = new MortonianConnectionPool(mockConnectionConfig, mockConnectionCreator, poolConfig);
+        
+        try {
+            Connection connection = connectionPool.getConnection();
+            
+            EasyMock.replay(mockConnection);
+
+            Assert.assertFalse("Connection Pools should not be shutdown", connectionPool.isShutdown());
+            Assert.assertTrue("Connection should still be valid", ((PooledConnectionInfo)connection).isLeaseValid());
+
+            EasyMock.verify(mockConnection);
+            EasyMock.reset(mockConnection);
+
+            mockConnection.commit();
+            EasyMock.expectLastCall();
+            
+            EasyMock.replay(mockConnection);
+            
+            connectionPool.shutdown();
+
+            Assert.assertTrue("Connection Pools should not be shutdown", connectionPool.isShutdown());
+
+            EasyMock.verify(mockConnection);
+            
+            try {
+                connection.createStatement();
+                Assert.fail("Should not be able to operate on a connection from a shutdown connection pool");
+            } catch (Exception e) {
+                _log.debug("Correctly got error working with connection post shutdown:"+e);
+            }
+            
+        } catch (SQLException e) {
+            _log.error("Error getting connection", e);
+            Assert.fail("Exception: "+e);
+        }   
+    }
 }

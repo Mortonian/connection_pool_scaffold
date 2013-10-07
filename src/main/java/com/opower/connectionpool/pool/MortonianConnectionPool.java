@@ -32,6 +32,7 @@ public class MortonianConnectionPool implements ConnectionPool {
 
     private ConnectionConfig _connectionConfig;
     private ConnectionCreator _connectionCreator;
+    private boolean _shutdown = true;
     private PoolConfig _poolConfig;
     private Map<String, ConnectionPoolEntry> _connectionEntries = new ConcurrentHashMap<String, ConnectionPoolEntry>();
     private Queue<String> _unleasedConnections  = new ConcurrentLinkedQueue<String>();
@@ -65,6 +66,8 @@ public class MortonianConnectionPool implements ConnectionPool {
                 }
             }
         }
+        
+        _shutdown = false;
     }
 
     /**
@@ -78,9 +81,25 @@ public class MortonianConnectionPool implements ConnectionPool {
      */
     @Override
     public Connection getConnection() throws SQLException {
+        if (_shutdown) {
+            throw new RuntimeException("Can't grant new connections ... we're shut down!");
+        }
         ConnectionPoolEntry connectionEntry = getOrCreateInitializedConnectionEntry();
         if (null == connectionEntry) {
-            return null;
+            for (int i = 0; i < _poolConfig.getRetryAttempts(); i++) {
+                try {
+                    Thread.sleep(_poolConfig.getRetryWaitTimeInMillis()); // ugh.  this is so not the way to do this.
+                } catch (InterruptedException e) {
+                    _log.error("someone has awoken my slumber", e);
+                }  
+                connectionEntry = getOrCreateInitializedConnectionEntry();
+                if (null != connectionEntry) {
+                    break;
+                }
+            }
+            if (null == connectionEntry) {
+                return null;
+            }
         }
         acquireIncrementIfNecessary();
         return buildConnectionProxy(connectionEntry); 
@@ -171,6 +190,10 @@ public class MortonianConnectionPool implements ConnectionPool {
                     throw new RuntimeException("Cannot release connection from another pool.  This pools uuid is "+_poolGuid+", but the connection's was "+connectionInfo.getConnectionPoolUuid());
                 }
                 
+                if (_poolConfig.getAutoCommit()) {
+                    connection.commit();
+                }
+                
                 connectionInfo.invalidateLease();
                 
                 String connectionUuid = connectionInfo.getConnectionUuid();
@@ -181,6 +204,29 @@ public class MortonianConnectionPool implements ConnectionPool {
                     _unleasedConnections.add(connectionUuid);
                 }
             }
+        }
+    }
+
+    /**
+     * @return whether or not this Connection Pool is shutdown
+     */
+    public boolean isShutdown() {
+        return _shutdown;
+    }
+    
+    /**
+     * Shuts down the connection pool by releasing all leased connections, and then preventing any new connections from getting leased.
+     * 
+     * @throws SQLException if there are problems releasing leased connections
+     */
+    public synchronized void shutdown() throws SQLException {
+        if (!isShutdown()) {
+            for (ConnectionPoolEntry entry : _connectionEntries.values()) {
+                if (entry.isLeased()) {
+                    releaseConnection(buildConnectionProxy(entry));
+                }
+            }
+            _shutdown = true;
         }
     }
 
