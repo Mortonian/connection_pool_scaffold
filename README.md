@@ -6,9 +6,11 @@ This is [Mortonian's](https://github.com/Mortonian/) solution to [OPOWER Connect
 
 The basic design concept of this solution is to decouple the connection creating code from the mechanics of the ConnectionPool itself, as well as to separate the jdbc connection configuration info and the pool configuration info.  This allows us to try out new behaviours via the novel compositions of existing parts.
 
-As of now, only one implementation of `src/main/java/com/opower/connectionpool/ConnectionPool.java` is provided: the `src/main/java/com/opower/connectionpool/pool/MortonianConnectionPool`.  There is also only one implementation of `src/main/java/com/opower/connectionpool/ConnectionCreator`: `src/main/java/com/opower/connectionpool/connection/MortonianConnectionCreator`.
+As of now, only one implementation of `src/main/java/com/opower/connectionpool/ConnectionPool.java` is provided: [com.opower.connectionpool.pool.MortonianConnectionPool(https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/main/java/com/opower/connectionpool/pool/MortonianConnectionPool.java).  There is also only one implementation of [com.opower.connectionpool.ConnectionCreator](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/main/java/com/opower/connectionpool/ConnectionCreator.java): [MortonianConnectionCreator](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/main/java/com/opower/connectionpool/connection/MortonianConnectionCreator.java).
 
-However, this separation is heavily used by the unit testing code included in this solution, with a `src/test/java/com/opower/connectionpool/NonPoolingConnectionPool` being used to test individual database connections without proper pooling, and a `src/test/java/com/opower/connectionpool/MockConnectionCreator` being used to test pooling behaviour with mock connections.  
+However, this separation is heavily used by the unit testing code included in this solution, with a [NonPoolingConnectionPool](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/test/java/com/opower/connectionpool/NonPoolingConnectionPool.java) being used to test individual database connections without proper pooling, and a [MockConnectionCreator](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/test/java/com/opower/connectionpool/MockConnectionCreator.java) being used to test pooling behaviour with mock connections.
+
+The MortonianConnectionPool supports configurable pool sizes (initial, max, and acquire increment), configurable retry behavior (may retries and wait time in millisecons), auto-commit on release, and other features.  And all of these features are are verified with unit tests that you can find in [the test package](https://github.com/Mortonian/connection_pool_scaffold/tree/master/src/test/java/com/opower/connectionpool).   
 
 ## Basic Usage
 
@@ -69,7 +71,16 @@ The Json file format looks like you would expect.  Here is an example:
 
 ## Connection Configurations
 
-Comming soon....
+Property| What it does
+---|---|---
+maxPoolSize|The maximum size of connections that a pool can make.  Default value is 1.
+acquireIncrement|When the number of unleased connections reaches zero, allocate this many more before another call to ConnectionPool#getConnection() is made.  Default value is 0.  (Note: may create less than this number so as to avoid violating maxPoolSize.)
+initialPoolSize|When the pool is initially constructed, create this many connections before users can begin to call ConnectionPool#getConnection().  Default value is 0.
+autoCommit|Should Connection.commit() be called on all leased connections before release or shutdown.  Default value is false.
+retryWaitTimeInMillis|If All connections are leased, how long to wait before trying again.  Default value is 300ms
+retryAttempts|If All connections are leased, how many more times to try before returning null.  Default value is 0.
+
+Full javadocs for these pool configurations are available [here](https://github.com/Mortonian/connection_pool_scaffold/blob/master/src/main/java/com/opower/connectionpool/PoolConfig.java).
 
 ## Compiling, Testing, Oh My!
 
