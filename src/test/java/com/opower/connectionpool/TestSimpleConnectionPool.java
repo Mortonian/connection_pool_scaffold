@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import com.opower.connectionpool.pool.PooledConnectionInfo;
 import com.opower.connectionpool.pool.SimpleConnectionPool;
 
 public class TestSimpleConnectionPool {
@@ -58,7 +59,9 @@ public class TestSimpleConnectionPool {
             Assert.assertEquals("Number of connections handed out after release connection should be 0", 0, connecionPool.getNumberOfConnectionsHandedOut());
             Assert.assertEquals("Number of connections available after release connection should be 1", 1, connecionPool.getNumberOfConnectionsAvailable());
             Connection connection2 = connecionPool.getConnection();
-            Assert.assertEquals("Should be the same connection", connection, connection2);
+            String uuid1 = ((PooledConnectionInfo)connection).getConnectionUuid();
+            String uuid2 = ((PooledConnectionInfo)connection2).getConnectionUuid();
+            Assert.assertEquals("Should be the same connection, got UUIDs: "+uuid1+", "+uuid2, uuid1, uuid2);
         } catch (SQLException e) {
             _log.error("Error testing zero-sized connection pool", e);
         }  
